@@ -8,14 +8,14 @@ import (
 )
 
 type CategoryService struct {
-	accountRepo  repo.AccountRepository
-	categoryRepo repo.CategoryRepository
+	accountRepo  *repo.AccountRepository
+	categoryRepo *repo.CategoryRepository
 	authService  models.AuthService
 }
 
 func NewCategoryService(
-	accountRepo repo.AccountRepository,
-	categoryRepo repo.CategoryRepository,
+	accountRepo *repo.AccountRepository,
+	categoryRepo *repo.CategoryRepository,
 	authService models.AuthService,
 ) *CategoryService {
 	return &CategoryService{

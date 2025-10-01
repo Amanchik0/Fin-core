@@ -65,7 +65,7 @@ func (c *AuthClient) ValidateToken(token string) (*models.AuthUser, error) {
 		return nil, fmt.Errorf("invalid token")
 
 	}
-	url := fmt.Sprintf("%s/api/auth/validate%s", c.baseURL, token)
+	url := fmt.Sprintf("%s/api/auth/validate", c.baseURL)
 
 	requestData := map[string]string{"token": token}
 	jsonData, err := json.Marshal(requestData)

@@ -8,16 +8,16 @@ import (
 )
 
 type AccountService struct {
-	accountRepo     repo.AccountRepository
-	BankAccountRepo repo.BankAccountRepository
-	transactionRepo repo.TransactionRepository
+	accountRepo     *repo.AccountRepository
+	BankAccountRepo *repo.BankAccountRepository
+	transactionRepo *repo.TransactionRepository
 	authService     models.AuthService
 }
 
 func NewAccountService(
-	accountRepo repo.AccountRepository,
-	bankAccountRepo repo.BankAccountRepository,
-	transactionRepo repo.TransactionRepository,
+	accountRepo *repo.AccountRepository,
+	bankAccountRepo *repo.BankAccountRepository,
+	transactionRepo *repo.TransactionRepository,
 	authService models.AuthService,
 ) *AccountService {
 	return &AccountService{
@@ -29,7 +29,7 @@ func NewAccountService(
 }
 func (s *AccountService) GetUserAccount(userID int64) (*models.Account, error) {
 	if userID <= 0 {
-		return nil, fmt.Errorf("invalid user id", userID)
+		return nil, fmt.Errorf("invalid user id: %d", userID)
 	}
 	account, err := s.accountRepo.GetByUserID(userID)
 	if err != nil {

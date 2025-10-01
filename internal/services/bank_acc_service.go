@@ -8,13 +8,13 @@ import (
 )
 
 type BankAccService struct {
-	BankAccountRepository repo.BankAccountRepository
-	accountRepo           repo.AccountRepository
+	BankAccountRepository *repo.BankAccountRepository
+	accountRepo           *repo.AccountRepository
 }
 
 func NewBankAccService(
-	BankAccountRepository repo.BankAccountRepository,
-	accountRepo repo.AccountRepository,
+	BankAccountRepository *repo.BankAccountRepository,
+	accountRepo *repo.AccountRepository,
 ) *BankAccService {
 	return &BankAccService{
 		BankAccountRepository: BankAccountRepository,

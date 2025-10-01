@@ -1,18 +1,111 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq" // ← добавить этот импорт!
+
+	"justTest/internal/handlers"
+	"justTest/internal/infrastructure/auth"
+	"justTest/internal/repo"
+	"justTest/internal/services"
 	"log"
-	"net/http"
+	"os"
 )
 
 func main() {
-	log.Println("Hello World")
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello World"))
-	})
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	db, err := initDB()
+	if err != nil {
+		log.Fatal("Error connecting to database")
+	}
+	defer db.Close()
+	authClient := auth.NewAuthClient(os.Getenv("AUTH_SERVICE_URL"))
+	accountRepo := repo.NewAccountRepository(db)
+	bankAccountRepo := repo.NewBankAccountRepository(db)
+	transactionRepo := repo.NewTransactionRepository(db)
+	categoryRepo := repo.NewCategoryRepository(db)
+
+	accountService := services.NewAccountService(accountRepo, bankAccountRepo, transactionRepo, authClient)
+	bankAccService := services.NewBankAccService(bankAccountRepo, accountRepo)
+	transactionService := services.NewTransactionService(transactionRepo, bankAccountRepo, categoryRepo, accountRepo)
+	categoryService := services.NewCategoryService(accountRepo, categoryRepo, authClient)
+
+	accountHandler := handlers.NewAccountHandler(accountService)
+	bankAccountHandler := handlers.NewBankAccountHandler(bankAccService)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
+	router := gin.Default()
+
+	handlers.RegisterRoutes(
+		router,
+		authClient,
+		transactionHandler,
+		accountHandler,
+		bankAccountHandler,
+		categoryHandler,
+	)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
+	log.Printf("Server starting on port %s", port)
+	if err := router.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
+}
+func initDB() (*sql.DB, error) {
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	sslMode := os.Getenv("DB_SSL_MODE")
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+	if dbPort == "" {
+		dbPort = "5432"
+	}
+	if dbUser == "" {
+		dbUser = "postgres"
+	}
+	if dbPassword == "" {
+		dbPassword = "postgres"
+	}
+	if dbName == "" {
+		dbName = "fin_db"
+	}
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		dbHost, dbPort, dbUser, dbPassword, dbName, sslMode)
+
+	log.Printf("Connecting to database: host=%s port=%s user=%s dbname=%s sslmode=%s",
+		dbHost, dbPort, dbUser, dbName, sslMode)
+
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Printf("Failed to open database connection: %v", err)
+		return nil, fmt.Errorf("failed to open database: %v", err)
+	}
+
+	log.Println("Database connection opened, testing ping...")
+	err = db.Ping()
+	if err != nil {
+		log.Printf("Failed to ping database: %v", err)
+		return nil, fmt.Errorf("failed to ping database: %v", err)
+	}
+	log.Println("Database connection established successfully")
+
+	return db, nil
 }

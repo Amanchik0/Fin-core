@@ -10,10 +10,10 @@ import (
 )
 
 type BankAccountHandler struct {
-	BankAccService services.BankAccService
+	BankAccService *services.BankAccService
 }
 
-func NewBankAccountHandler(bankAccService services.BankAccService) *BankAccountHandler {
+func NewBankAccountHandler(bankAccService *services.BankAccService) *BankAccountHandler {
 	return &BankAccountHandler{
 		BankAccService: bankAccService,
 	}

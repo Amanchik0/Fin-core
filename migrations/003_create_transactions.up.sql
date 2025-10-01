@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     date TIMESTAMP WITH TIME ZONE NOT NULL,
                                                                                                              to_account_id BIGINT REFERENCES bank_accounts(id),
     transfer_rate DECIMAL(15,6),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at timestamp with time zone default now()
     );
 

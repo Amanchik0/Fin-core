@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"justTest/internal/models"
 	"justTest/internal/services"
 	"justTest/internal/utils"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AccountHandler struct {
@@ -37,7 +38,7 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false,
-			"error":   "failed to create exists",
+			"error":   "failed to create account",
 			"details": err.Error(),
 		})
 		return

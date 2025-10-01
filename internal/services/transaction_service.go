@@ -8,17 +8,17 @@ import (
 )
 
 type TransactionService struct {
-	transactionRepo repo.TransactionRepository
-	bankAccountRepo repo.BankAccountRepository
-	categoryRepo    repo.CategoryRepository
-	accountRepo     repo.AccountRepository
+	transactionRepo *repo.TransactionRepository
+	bankAccountRepo *repo.BankAccountRepository
+	categoryRepo    *repo.CategoryRepository
+	accountRepo     *repo.AccountRepository
 }
 
 func NewTransactionService(
-	transactionRepo repo.TransactionRepository,
-	bankAccountRepo repo.BankAccountRepository,
-	categoryRepo repo.CategoryRepository,
-	accountRepo repo.AccountRepository,
+	transactionRepo *repo.TransactionRepository,
+	bankAccountRepo *repo.BankAccountRepository,
+	categoryRepo *repo.CategoryRepository,
+	accountRepo *repo.AccountRepository,
 ) *TransactionService {
 	return &TransactionService{
 		transactionRepo: transactionRepo,
@@ -167,7 +167,7 @@ func (s *TransactionService) GetAllTransactions(userID int64) ([]*models.Transac
 	if userID <= 0 {
 		return nil, fmt.Errorf("invalid user id")
 	}
-	userAccount, err := s.accountRepo.GetByID(userID)
+	userAccount, err := s.accountRepo.GetByUserID(userID)
 	if err != nil {
 		return nil, err
 	}

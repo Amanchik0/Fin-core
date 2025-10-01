@@ -154,3 +154,40 @@ type CreateCategoryRequest struct {
 	Color string `json:"color" binding:"required"`
 	Icon  string `json:"icon" binding:"required"`
 }
+type CreateTransactionRequest struct {
+	BankAccountID   int64   `json:"bank_account_id" binding:"required"`                       // ID банковского счета
+	Amount          float64 `json:"amount" binding:"required"`                                // Сумма транзакции
+	Description     string  `json:"description" binding:"required,min=1,max=255"`             // Описание транзакции
+	CategoryID      *int64  `json:"category_id"`                                              // ID категории (может быть null)
+	TransactionType string  `json:"transaction_type" binding:"required,oneof=income expense"` // Тип: доход или расход
+}
+
+type TransferRequest struct {
+	FromAccountID int64   `json:"from_account_id" binding:"required"`           // Откуда переводим
+	ToAccountID   int64   `json:"to_account_id" binding:"required"`             // Куда переводим
+	Amount        float64 `json:"amount" binding:"required"`                    // Сумма перевода
+	Description   string  `json:"description" binding:"required,min=1,max=255"` // Описание перевода
+}
+
+type TransactionResponse struct {
+	ID              int64   `json:"id"`
+	BankAccountID   int64   `json:"bank_account_id"`
+	CategoryID      *int64  `json:"category_id"`
+	Amount          float64 `json:"amount"`
+	Description     string  `json:"description"`
+	TransactionType string  `json:"transaction_type"`
+	Date            string  `json:"date"`
+	CreatedAt       string  `json:"created_at"`
+	UpdatedAt       string  `json:"updated_at"`
+}
+
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message,omitempty"`
+}
+
+type SuccessResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Message string      `json:"message,omitempty"`
+}
