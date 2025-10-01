@@ -30,7 +30,7 @@ func RegisterRoutes(
 	protected.Use(middleware.AuthMiddleware(authClient))
 	{
 		protected.POST("/account", accountHandler.CreateAccount)
-		protected.GET("account", accountHandler.GetAccount)
+		protected.GET("/account", accountHandler.GetAccount)
 
 		bankAccounts := protected.Group("/bankAccounts")
 		{
@@ -39,6 +39,7 @@ func RegisterRoutes(
 			bankAccounts.GET("/:bank_account_id", bankAccountHandler.GetBankAccount) // достается конкретный по банк аккаунт айди
 			bankAccounts.DELETE("/:bank_account_id", bankAccountHandler.DeleteBankAccount)
 			bankAccounts.PUT("/:bank_account_id/deactivate", bankAccountHandler.DeactivateBankAccount)
+			bankAccounts.PUT("/:bank_account_id/activate", bankAccountHandler.ActivateBankAccount)
 		}
 		transactions := protected.Group("/transactions")
 		{
@@ -48,7 +49,7 @@ func RegisterRoutes(
 		}
 		protected.POST("/transfer", transactionHandler.TransferBetweenAccounts)
 
-		protected.GET("/account/:account_id/transactions", transactionHandler.GetTransactionHistory)
+		protected.GET("/account/:account_id/transactions", transactionHandler.GetTransactionHistory) //  по сути удалить надо
 		protected.GET("/bank_accounts/:account_id/balance", transactionHandler.GetBankAccountBalance)
 
 		categories := protected.Group("/categories")
@@ -56,7 +57,7 @@ func RegisterRoutes(
 			categories.POST("", categoryHandler.CreateCategory)
 			categories.GET("", categoryHandler.GetByAccountID)
 			categories.GET("/:category_id", categoryHandler.GetCategoryByID)
-			categories.DELETE("/category_id", categoryHandler.DeleteCategoryByID)
+			categories.DELETE("/:category_id", categoryHandler.DeleteCategoryByID)
 		}
 	}
 	optional := v1.Group("/public")

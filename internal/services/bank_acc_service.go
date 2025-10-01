@@ -21,8 +21,8 @@ func NewBankAccService(
 		accountRepo:           accountRepo,
 	}
 }
-func (s *BankAccService) CreateBankAccount(userID int64, name, currency, accountType, bankName string) (*models.BankAccount, error) {
-	if userID <= 0 {
+func (s *BankAccService) CreateBankAccount(userID string, name, currency, accountType, bankName string) (*models.BankAccount, error) {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 	}
 	if name == "" {
@@ -64,8 +64,8 @@ func (s *BankAccService) CreateBankAccount(userID int64, name, currency, account
 	}
 	return createdBankAccount, nil
 }
-func (s *BankAccService) GetBankAccount(userID int64, bankAccountID int64) (*models.BankAccount, error) {
-	if userID <= 0 {
+func (s *BankAccService) GetBankAccount(userID string, bankAccountID int64) (*models.BankAccount, error) {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 	}
 	if bankAccountID <= 0 {
@@ -85,8 +85,8 @@ func (s *BankAccService) GetBankAccount(userID int64, bankAccountID int64) (*mod
 
 	return bankAccount, nil
 }
-func (s *BankAccService) GetBankAccountsByAccountID(userID int64) ([]*models.BankAccount, error) {
-	if userID <= 0 {
+func (s *BankAccService) GetBankAccountsByAccountID(userID string) ([]*models.BankAccount, error) {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 	}
 	userAccount, err := s.accountRepo.GetByUserID(userID)
@@ -96,8 +96,8 @@ func (s *BankAccService) GetBankAccountsByAccountID(userID int64) ([]*models.Ban
 	return s.BankAccountRepository.GetByAccountID(userAccount.ID)
 
 }
-func (s *BankAccService) DeActiveBankAccount(userID int64, bankAccountID int64) error {
-	if userID <= 0 {
+func (s *BankAccService) DeActiveBankAccount(userID string, bankAccountID int64) error {
+	if userID == "" {
 		return fmt.Errorf("invalid user id")
 	}
 	if bankAccountID <= 0 {
@@ -116,10 +116,32 @@ func (s *BankAccService) DeActiveBankAccount(userID int64, bankAccountID int64) 
 
 	}
 	return s.BankAccountRepository.DeActiveBankAccount(bankAccountID)
-
 }
-func (s *BankAccService) DeleteBankAccount(userID int64, bankAccountID int64) error {
-	if userID <= 0 {
+
+func (s *BankAccService) ActivateBankAccount(userID string, bankAccountID int64) error {
+	if userID == "" {
+		return fmt.Errorf("invalid user id")
+	}
+	if bankAccountID <= 0 {
+		return fmt.Errorf("invalid bank account id")
+	}
+	userAccount, err := s.accountRepo.GetByUserID(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user account")
+	}
+	bankAccount, err := s.BankAccountRepository.GetByBankAccountID(bankAccountID)
+	if err != nil {
+		return fmt.Errorf("invalid user account")
+	}
+	if bankAccount.AccountID != userAccount.ID {
+		return fmt.Errorf("invalid user account")
+
+	}
+	return s.BankAccountRepository.ActivateBankAccount(bankAccountID)
+}
+
+func (s *BankAccService) DeleteBankAccount(userID string, bankAccountID int64) error {
+	if userID == "" {
 		return fmt.Errorf("invalid user id")
 	}
 	if bankAccountID <= 0 {
@@ -138,5 +160,4 @@ func (s *BankAccService) DeleteBankAccount(userID int64, bankAccountID int64) er
 
 	}
 	return s.BankAccountRepository.DeleteBankAccount(bankAccountID)
-
 }

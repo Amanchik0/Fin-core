@@ -18,7 +18,8 @@ func NewTransactionRepository(db *sql.DB) *TransactionRepository {
 }
 func (r *TransactionRepository) Create(transaction *models.Transaction) (*models.Transaction, error) {
 	query := `
-insert into transactions ( bank_account_id, category_id, amount, description, transaction_type, date, created_at, updated_at, to_account_id, transfer_rate)
+insert into transactions ( bank_account_id, category_id, amount, description, transaction_type, date, 
+                          created_at, updated_at, to_account_id, transfer_rate)
 	values ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10)
 	returning id;`
 	err := r.db.QueryRow(query,

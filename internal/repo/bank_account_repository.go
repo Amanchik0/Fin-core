@@ -59,8 +59,8 @@ func (r *BankAccountRepository) GetByAccountID(accountID int64) ([]*models.BankA
 			&account.Name,
 			&account.Currency,
 			&account.AccountType,
-			&account.IsActive,
 			&account.BankName,
+			&account.IsActive,
 			&account.CreatedAt,
 			&account.UpdatedAt,
 		)
@@ -72,6 +72,7 @@ func (r *BankAccountRepository) GetByAccountID(accountID int64) ([]*models.BankA
 	return accounts, nil
 
 }
+
 func (r *BankAccountRepository) GetActiveBankAccounts(accountID int64) ([]*models.BankAccount, error) {
 	query := `
 	select id, account_id, name, currency, account_type, bank_name, is_active, created_at, updated_at
@@ -92,8 +93,8 @@ func (r *BankAccountRepository) GetActiveBankAccounts(accountID int64) ([]*model
 			&account.Name,
 			&account.Currency,
 			&account.AccountType,
-			&account.IsActive,
 			&account.BankName,
+			&account.IsActive,
 			&account.CreatedAt,
 			&account.UpdatedAt,
 		)
@@ -126,8 +127,9 @@ where account_id = $1 and currency = $2;
 			&account.Name,
 			&account.Currency,
 			&account.AccountType,
-			&account.IsActive,
 			&account.BankName,
+
+			&account.IsActive,
 			&account.CreatedAt,
 			&account.UpdatedAt,
 		)
@@ -153,8 +155,8 @@ where id = $1; `
 		&bankAccount.Name,
 		&bankAccount.Currency,
 		&bankAccount.AccountType,
-		&bankAccount.IsActive,
 		&bankAccount.BankName,
+		&bankAccount.IsActive,
 		&bankAccount.CreatedAt,
 		&bankAccount.UpdatedAt,
 	)
@@ -200,6 +202,25 @@ update bank_accounts set is_active = false , updated_at = now() where id = $1`
 	return nil
 
 }
+
+func (r *BankAccountRepository) ActivateBankAccount(bankAccountID int64) error {
+	query := `
+update bank_accounts set is_active = true , updated_at = now() where id = $1`
+	res, err := r.db.Exec(query, bankAccountID)
+	if err != nil {
+		return fmt.Errorf("Error to activate bank account: %v", err)
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("Error activate bank account: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf(`No bank account found with id %d`, bankAccountID)
+	}
+	return nil
+
+}
+
 func (r *BankAccountRepository) DeleteBankAccount(bankAccountID int64) error {
 	query := `
 delete from bank_accounts where id = $1`

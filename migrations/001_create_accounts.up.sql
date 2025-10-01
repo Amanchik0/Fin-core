@@ -2,7 +2,7 @@
 
 create table if not exists accounts (
     id bigserial primary key,
-    user_id bigint not null,
+    user_id VARCHAR(255) not null,
     name varchar(255) not null,
     display_name varchar(255) not null,
     timezone varchar(100) default 'Asia/Almaty',

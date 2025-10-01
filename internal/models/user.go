@@ -7,7 +7,7 @@ import (
 // Account - единственный финансовый аккаунт пользователя
 type Account struct {
 	ID           int64     `json:"id" db:"id"`
-	UserID       int64     `json:"user_id" db:"user_id"`             // ID из auth-сервиса (Node.js)
+	UserID       string    `json:"user_id" db:"user_id"`             // ID из auth-сервиса (Node.js)
 	Name         string    `json:"name" db:"name"`                   // "Мой аккаунт", или имя пользователя
 	DisplayName  string    `json:"display_name" db:"display_name"`   // имя для отображения в UI
 	Timezone     string    `json:"timezone" db:"timezone"`           // для корректного отображения времени
@@ -91,7 +91,7 @@ type CurrencyRate struct {
 
 // DTO для взаимодействия с auth-сервисом
 type AuthUser struct {
-	ID       int64  `json:"id"`
+	ID       string `json:"id"` // ← изменить на string
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
@@ -133,7 +133,7 @@ type UpdateAccountRequest struct {
 }
 type AccountResponse struct {
 	ID          int64     `json:"id"`
-	UserID      int64     `json:"user_id"`
+	UserID      string    `json:"user_id"`
 	Name        string    `json:"name"`
 	DisplayName string    `json:"display_name"`
 	Timezone    string    `json:"timezone"`
@@ -142,10 +142,54 @@ type AccountResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// MonthlyReport - месячный отчет
+type MonthlyReport struct {
+	Month        int                 `json:"month"`
+	Year         int                 `json:"year"`
+	TotalIncome  float64             `json:"total_income"`
+	TotalExpense float64             `json:"total_expense"`
+	NetIncome    float64             `json:"net_income"`
+	Categories   []*CategorySpending `json:"categories"`
+	TopExpenses  []*Transaction      `json:"top_expenses"`
+}
+
+// CategorySpending - траты по категории
+type CategorySpending struct {
+	CategoryID   int64   `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Amount       float64 `json:"amount"`
+	Percentage   float64 `json:"percentage"`
+}
+
+// IncomeExpenseReport - отчет доходы vs расходы
+type IncomeExpenseReport struct {
+	TotalIncome  float64 `json:"total_income"`
+	TotalExpense float64 `json:"total_expense"`
+	NetIncome    float64 `json:"net_income"`
+	SavingsRate  float64 `json:"savings_rate"` // процент сбережений
+}
+
+// BudgetAlert - уведомление о превышении бюджета
+type BudgetAlert struct {
+	BudgetID     int64   `json:"budget_id"`
+	BudgetName   string  `json:"budget_name"`
+	BudgetAmount float64 `json:"budget_amount"`
+	SpentAmount  float64 `json:"spent_amount"`
+	ExcessAmount float64 `json:"excess_amount"`
+}
+
+// BalanceAlert - уведомление о низком балансе
+type BalanceAlert struct {
+	BankAccountID  int64   `json:"bank_account_id"`
+	AccountName    string  `json:"account_name"`
+	CurrentBalance float64 `json:"current_balance"`
+	AlertThreshold float64 `json:"alert_threshold"`
+}
+
 type CreateBankAccountRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=40"`
-	Currency    string `json:"currency" binding:"required,currency"`
-	AccountType string `json:"account_type" binding:"required,currency"`
+	Currency    string `json:"currency" binding:"required,oneof=KZT USD EUR RUB"`
+	AccountType string `json:"account_type" binding:"required,oneof=cash debit credit savings"`
 	BankName    string `json:"bank_name" binding:"required,min=2,max=40"`
 }
 type CreateCategoryRequest struct {

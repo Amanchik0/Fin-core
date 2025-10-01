@@ -98,6 +98,7 @@ func (r *CategoryRepository) GetByID(catrgotyID int64) (*models.Category, error)
 	category := &models.Category{}
 	err := r.db.QueryRow(query, catrgotyID).Scan(
 		&category.ID,
+		&category.AccountID,
 		&category.Name,
 		&category.Type,
 		&category.Color,

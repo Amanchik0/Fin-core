@@ -35,33 +35,32 @@ func (r *AccountRepository) Create(account *models.Account) (*models.Account, er
 
 }
 
-func (r *AccountRepository) GetByUserID(userID int64) (*models.Account, error) {
+func (r *AccountRepository) GetByUserID(userID string) (*models.Account, error) {
 	query := `
-	select id, user_id, name, display_name, timezone, is_active, created_at 
-	from accounts
-	where user_id = $1 and is_active = true`
-	rows, err := r.db.Query(query, userID)
+    SELECT id, user_id, name, display_name, timezone, is_active, created_at, updated_at 
+    FROM accounts
+    WHERE user_id = $1 AND is_active = true`
+
+	var account models.Account
+	err := r.db.QueryRow(query, userID).Scan(
+		&account.ID,
+		&account.UserID,
+		&account.Name,
+		&account.DisplayName,
+		&account.Timezone,
+		&account.IsActive,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+	)
+
 	if err != nil {
-		return nil, fmt.Errorf("error getting accounts: %v", err)
-	}
-	defer rows.Close()
-	var account *models.Account
-	for rows.Next() {
-		account = &models.Account{}
-		err := rows.Scan(&account.ID,
-			&account.UserID,
-			&account.Name,
-			&account.DisplayName,
-			&account.Timezone,
-			&account.IsActive,
-			&account.CreatedAt,
-			&account.UpdatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("error getting accounts: %v", err)
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Account not found") // ✅ Возвращаем ошибку
 		}
+		return nil, fmt.Errorf("error getting account: %v", err)
 	}
 
-	return account, nil
+	return &account, nil
 }
 func (r *AccountRepository) GetByID(id int64) (*models.Account, error) {
 	query := `

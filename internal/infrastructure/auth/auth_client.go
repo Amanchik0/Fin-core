@@ -91,10 +91,20 @@ func (c *AuthClient) ValidateToken(token string) (*models.AuthUser, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("error executing request: %s %s", resp.Status, string(body))
 	}
-	var user models.AuthUser
-	err = json.Unmarshal(body, &user)
+
+	// Парсим ответ с полем data
+	var response struct {
+		Success bool            `json:"success"`
+		Data    models.AuthUser `json:"data"`
+	}
+	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling response body: %s", err)
 	}
-	return &user, nil
+
+	if !response.Success {
+		return nil, fmt.Errorf("auth service returned error")
+	}
+
+	return &response.Data, nil
 }
