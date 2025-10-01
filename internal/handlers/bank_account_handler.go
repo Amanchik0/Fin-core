@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"justTest/internal/models"
 	"justTest/internal/services"
 	"justTest/internal/utils"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type BankAccountHandler struct {
@@ -127,6 +128,41 @@ func (h *BankAccountHandler) GetBankAccount(c *gin.Context) {
 	})
 
 }
+func (h *BankAccountHandler) ActivateBankAccount(c *gin.Context) {
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		return
+	}
+	bankAccountIDStr := c.Param("bank_account_id")
+	bankAccountID, err := strconv.ParseInt(bankAccountIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "invalid bank account id",
+		})
+		return
+	}
+	err = h.BankAccService.ActivateBankAccount(userID, bankAccountID)
+	if err != nil {
+		if err.Error() == "invlaid user acc" {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status": false,
+				"error":  "access denied",
+			})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"error":   "failed to activate bank account",
+			"details": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "bank account activated",
+	})
+}
 
 func (h *BankAccountHandler) DeactivateBankAccount(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
@@ -189,13 +225,13 @@ func (h *BankAccountHandler) DeleteBankAccount(c *gin.Context) {
 		}
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  false,
-			"error":   "failed to deactivate bank account",
+			"error":   "failed to delete bank account",
 			"details": err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "bank account deactivated",
+		"message": "bank account deleted successfully",
 	})
 }

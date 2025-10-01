@@ -27,20 +27,21 @@ func NewAccountService(
 		authService:     authService,
 	}
 }
-func (s *AccountService) GetUserAccount(userID int64) (*models.Account, error) {
-	if userID <= 0 {
-		return nil, fmt.Errorf("invalid user id: %d", userID)
+func (s *AccountService) GetUserAccount(userID string) (*models.Account, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("invalid user id: %s", userID)
 	}
 	account, err := s.accountRepo.GetByUserID(userID)
 	if err != nil {
-		return nil, fmt.Errorf("get account by user id failed, err:%v", err)
+		return nil, fmt.Errorf("invalid user id: empty")
 	}
+
 	return account, nil
 
 }
-func (s *AccountService) CreateAccount(userID int64, displayName string) (*models.Account, error) {
-	if userID <= 0 {
-		return nil, fmt.Errorf("invalid user id", userID)
+func (s *AccountService) CreateAccount(userID string, displayName string) (*models.Account, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("invalid user id: empty")
 	}
 	if displayName == "" {
 		return nil, fmt.Errorf("display name is required")
@@ -51,7 +52,7 @@ func (s *AccountService) CreateAccount(userID int64, displayName string) (*model
 		return nil, fmt.Errorf("get account by user id failed, err:%v", err)
 	}
 	if existingAccount != nil {
-		return nil, fmt.Errorf("account with id %d already exists", existingAccount.UserID)
+		return nil, fmt.Errorf("account with id %s already exists", existingAccount.UserID)
 	}
 	//authUser, err := s.authService.GetUserByID(fmt.Sprintf("%d", userID))
 	//if err != nil {

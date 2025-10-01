@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"justTest/internal/models"
 	"justTest/internal/services"
 	"justTest/internal/utils"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CategoryHandler struct {
@@ -90,21 +91,25 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 	})
 
 }
-func (h *CategoryHandler) GetByAccountID(c *gin.Context) {
-	//userID, ok := utils.GetUserID(c)
-	//if !ok {
-	//	return
-	//}
 
-	accountIDStr := c.Param("account_id")
-	accountID, err := strconv.ParseInt(accountIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
+func (h *CategoryHandler) GetByAccountID(c *gin.Context) {
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		return
 	}
-	accountCategories, err := h.categoryService.GetByAccountID(accountID)
+
+	// Получаем account_id через user_id
+	account, err := h.categoryService.GetAccountByUserID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "failed to get user account",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	accountCategories, err := h.categoryService.GetByAccountID(account.ID)
 	if err != nil {
 		if err.Error() == "ibvalid user account" {
 			c.JSON(http.StatusNotFound, gin.H{

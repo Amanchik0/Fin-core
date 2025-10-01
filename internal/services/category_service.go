@@ -26,7 +26,15 @@ func NewCategoryService(
 
 }
 
-func (s *CategoryService) CreateCategory(userID int64, category *models.Category) (*models.Category, error) {
+func (s *CategoryService) GetAccountByUserID(userID string) (*models.Account, error) {
+	account, err := s.accountRepo.GetByUserID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("get account: %w", err)
+	}
+	return account, nil
+}
+
+func (s *CategoryService) CreateCategory(userID string, category *models.Category) (*models.Category, error) {
 	if category == nil {
 		return nil, fmt.Errorf("category is nil")
 	}
@@ -46,7 +54,7 @@ func (s *CategoryService) CreateCategory(userID int64, category *models.Category
 	return newCategory, nil
 }
 
-func (s *CategoryService) UpdateCategory(userID int64, category *models.Category) (*models.Category, error) {
+func (s *CategoryService) UpdateCategory(userID string, category *models.Category) (*models.Category, error) {
 	if category == nil {
 		return nil, fmt.Errorf("category is nil")
 	}
@@ -65,7 +73,7 @@ func (s *CategoryService) UpdateCategory(userID int64, category *models.Category
 	return updatedCategory, nil
 }
 
-func (s *CategoryService) DeleteCategory(userID int64, categoryID int64) error {
+func (s *CategoryService) DeleteCategory(userID string, categoryID int64) error {
 	if categoryID == 0 {
 		return fmt.Errorf("category is nil")
 	}
@@ -97,7 +105,7 @@ func (s *CategoryService) GetByAccountID(accountID int64) ([]*models.Category, e
 	return category, nil
 }
 
-func (s *CategoryService) GetByCategoryID(userID int64, categoryID int64) (*models.Category, error) {
+func (s *CategoryService) GetByCategoryID(userID string, categoryID int64) (*models.Category, error) {
 	if categoryID == 0 {
 		return nil, fmt.Errorf("category is nil")
 	}

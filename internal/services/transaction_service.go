@@ -28,7 +28,7 @@ func NewTransactionService(
 	}
 }
 
-func (s *TransactionService) validateCategoryOwnership(userID int64, categoryID int64) error {
+func (s *TransactionService) validateCategoryOwnership(userID string, categoryID int64) error {
 	category, err := s.categoryRepo.GetByID(categoryID)
 	if err != nil {
 		return fmt.Errorf("category not found", err)
@@ -43,7 +43,7 @@ func (s *TransactionService) validateCategoryOwnership(userID int64, categoryID 
 	}
 	return nil
 }
-func (s *TransactionService) validateBankAccountOwnership(userID int64, bankAccountID int64) error {
+func (s *TransactionService) validateBankAccountOwnership(userID string, bankAccountID int64) error {
 	bankAccount, err := s.bankAccountRepo.GetByBankAccountID(bankAccountID)
 	if err != nil {
 		return fmt.Errorf("bank account not found", err)
@@ -58,9 +58,9 @@ func (s *TransactionService) validateBankAccountOwnership(userID int64, bankAcco
 	return nil
 }
 
-func (s *TransactionService) CreateTransaction(userID int64, bankAccountID int64, amount float64, description string, categoryID *int64, transactionType string) (*models.Transaction, error) {
+func (s *TransactionService) CreateTransaction(userID string, bankAccountID int64, amount float64, description string, categoryID *int64, transactionType string) (*models.Transaction, error) {
 
-	if userID <= 0 {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 	}
 	if amount == 0 {
@@ -113,8 +113,8 @@ func (s *TransactionService) CreateTransaction(userID int64, bankAccountID int64
 // GetTransactionHistory
 // GetBankAccountBalance
 // GetTransaction
-func (s *TransactionService) TransferBetweenAccounts(userID int64, fromAccountID int64, toAccountID int64, description string, amount float64) error {
-	if userID <= 0 {
+func (s *TransactionService) TransferBetweenAccounts(userID string, fromAccountID int64, toAccountID int64, description string, amount float64) error {
+	if userID == "" {
 		return fmt.Errorf("invalid user id")
 	}
 	if fromAccountID <= 0 {
@@ -146,8 +146,8 @@ func (s *TransactionService) TransferBetweenAccounts(userID int64, fromAccountID
 	return nil
 
 }
-func (s *TransactionService) GetTransactionHistory(userID int64, bankAccountID int64) ([]*models.Transaction, error) {
-	if userID <= 0 {
+func (s *TransactionService) GetTransactionHistory(userID string, bankAccountID int64) ([]*models.Transaction, error) {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 	}
 	if bankAccountID <= 0 {
@@ -163,8 +163,8 @@ func (s *TransactionService) GetTransactionHistory(userID int64, bankAccountID i
 	}
 	return transactions, nil
 }
-func (s *TransactionService) GetAllTransactions(userID int64) ([]*models.Transaction, error) {
-	if userID <= 0 {
+func (s *TransactionService) GetAllTransactions(userID string) ([]*models.Transaction, error) {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 	}
 	userAccount, err := s.accountRepo.GetByUserID(userID)
@@ -178,8 +178,8 @@ func (s *TransactionService) GetAllTransactions(userID int64) ([]*models.Transac
 	}
 	return transactions, nil
 }
-func (s *TransactionService) GetBankAccountBalance(userID int64, bankAccountID int64) (float64, error) {
-	if userID <= 0 {
+func (s *TransactionService) GetBankAccountBalance(userID string, bankAccountID int64) (float64, error) {
+	if userID == "" {
 		return 0, fmt.Errorf("invalid user id")
 	}
 	if bankAccountID <= 0 {
@@ -196,8 +196,8 @@ func (s *TransactionService) GetBankAccountBalance(userID int64, bankAccountID i
 	}
 	return balance, nil
 }
-func (s *TransactionService) GetTransactionByID(userID int64, transactionID int64) (*models.Transaction, error) {
-	if userID <= 0 {
+func (s *TransactionService) GetTransactionByID(userID string, transactionID int64) (*models.Transaction, error) {
+	if userID == "" {
 		return nil, fmt.Errorf("invalid user id")
 
 	}
