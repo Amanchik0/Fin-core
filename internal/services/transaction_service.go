@@ -2,23 +2,24 @@ package services
 
 import (
 	"fmt"
+	"justTest/internal/interfaces"
 	"justTest/internal/models"
-	"justTest/internal/repo"
+	"justTest/internal/utils"
 	"time"
 )
 
 type TransactionService struct {
-	transactionRepo *repo.TransactionRepository
-	bankAccountRepo *repo.BankAccountRepository
-	categoryRepo    *repo.CategoryRepository
-	accountRepo     *repo.AccountRepository
+	transactionRepo interfaces.TransactionRepository
+	bankAccountRepo interfaces.BankAccountRepository
+	categoryRepo    interfaces.CategoryRepository
+	accountRepo     interfaces.AccountRepository
 }
 
 func NewTransactionService(
-	transactionRepo *repo.TransactionRepository,
-	bankAccountRepo *repo.BankAccountRepository,
-	categoryRepo *repo.CategoryRepository,
-	accountRepo *repo.AccountRepository,
+	transactionRepo interfaces.TransactionRepository,
+	bankAccountRepo interfaces.BankAccountRepository,
+	categoryRepo interfaces.CategoryRepository,
+	accountRepo interfaces.AccountRepository,
 ) *TransactionService {
 	return &TransactionService{
 		transactionRepo: transactionRepo,
@@ -31,29 +32,28 @@ func NewTransactionService(
 func (s *TransactionService) validateCategoryOwnership(userID string, categoryID int64) error {
 	category, err := s.categoryRepo.GetByID(categoryID)
 	if err != nil {
-		return fmt.Errorf("category not found", err)
-
+		return fmt.Errorf("category not found: %w", err)
 	}
 	userAccount, err := s.accountRepo.GetByUserID(userID)
 	if err != nil {
-		return fmt.Errorf("user not found", err)
+		return fmt.Errorf("user not found: %w", err)
 	}
 	if category.AccountID != userAccount.ID {
-		return fmt.Errorf("user is not owned by the category", err)
+		return fmt.Errorf("user is not owned by the category: %w", err)
 	}
 	return nil
 }
 func (s *TransactionService) validateBankAccountOwnership(userID string, bankAccountID int64) error {
 	bankAccount, err := s.bankAccountRepo.GetByBankAccountID(bankAccountID)
 	if err != nil {
-		return fmt.Errorf("bank account not found", err)
+		return fmt.Errorf("bank account not found: %w", err)
 	}
 	userAccount, err := s.accountRepo.GetByUserID(userID)
 	if err != nil {
-		return fmt.Errorf("user not found", err)
+		return fmt.Errorf("user not found: %w", err)
 	}
 	if bankAccount.AccountID != userAccount.ID {
-		return fmt.Errorf("user is not owned by the bank account", err)
+		return fmt.Errorf("user is not owned by the bank account: %w", err)
 	}
 	return nil
 }
@@ -157,7 +157,9 @@ func (s *TransactionService) GetTransactionHistory(userID string, bankAccountID 
 	if err != nil {
 		return nil, err
 	}
-	transactions, err := s.transactionRepo.GetByBankAccountID(bankAccountID)
+	limit, offset := utils.GetPaginationParams(1, 20) // Для первой страницы
+
+	transactions, err := s.transactionRepo.GetByBankAccountID(bankAccountID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +173,9 @@ func (s *TransactionService) GetAllTransactions(userID string) ([]*models.Transa
 	if err != nil {
 		return nil, err
 	}
-	transactions, err := s.transactionRepo.GetByAccountID(userAccount.ID)
+	limit, offset := utils.GetPaginationParams(1, 20) // Для первой страницы
+
+	transactions, err := s.transactionRepo.GetByAccountID(userAccount.ID, limit, offset)
 	if err != nil {
 		return nil, err
 

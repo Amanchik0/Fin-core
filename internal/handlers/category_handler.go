@@ -22,6 +22,19 @@ func NewCategoryHandler(categoryService *services.CategoryService) *CategoryHand
 }
 
 // create category psot
+// CreateCategory godoc
+// @Summary Create a new category
+// @Description Create a new expense or income category for the authenticated user
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param request body models.CreateCategoryRequest true "Category creation request"
+// @Success 201 {object} models.Category
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /categories [post]
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -56,6 +69,20 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	})
 
 }
+
+// GetCategoryByID godoc
+// @Summary Get a specific category
+// @Description Get a specific category by ID for the authenticated user
+// @Tags categories
+// @Produce json
+// @Param category_id path int true "Category ID"
+// @Success 200 {object} models.Category
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Category not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /categories/{category_id} [get]
 func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -92,6 +119,16 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 
 }
 
+// GetByAccountID godoc
+// @Summary Get all categories
+// @Description Get all categories for the authenticated user's account
+// @Tags categories
+// @Produce json
+// @Success 200 {array} models.Category
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /categories [get]
 func (h *CategoryHandler) GetByAccountID(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -129,6 +166,20 @@ func (h *CategoryHandler) GetByAccountID(c *gin.Context) {
 		"data":    accountCategories,
 	})
 }
+
+// DeleteCategoryByID godoc
+// @Summary Delete a category
+// @Description Delete a category by ID for the authenticated user
+// @Tags categories
+// @Produce json
+// @Param category_id path int true "Category ID"
+// @Success 200 {object} map[string]interface{} "Success message"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Category not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /categories/{category_id} [delete]
 func (h *CategoryHandler) DeleteCategoryByID(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {

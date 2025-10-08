@@ -2,22 +2,22 @@ package services
 
 import (
 	"fmt"
+	"justTest/internal/interfaces"
 	"justTest/internal/models"
-	"justTest/internal/repo"
 	"time"
 )
 
 type AccountService struct {
-	accountRepo     *repo.AccountRepository
-	BankAccountRepo *repo.BankAccountRepository
-	transactionRepo *repo.TransactionRepository
+	accountRepo     interfaces.AccountRepository
+	BankAccountRepo interfaces.BankAccountRepository
+	transactionRepo interfaces.TransactionRepository
 	authService     models.AuthService
 }
 
 func NewAccountService(
-	accountRepo *repo.AccountRepository,
-	bankAccountRepo *repo.BankAccountRepository,
-	transactionRepo *repo.TransactionRepository,
+	accountRepo interfaces.AccountRepository,
+	bankAccountRepo interfaces.BankAccountRepository,
+	transactionRepo interfaces.TransactionRepository,
 	authService models.AuthService,
 ) *AccountService {
 	return &AccountService{

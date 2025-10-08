@@ -1,0 +1,894 @@
+basePath: /api/v1
+definitions:
+  models.AccountResponse:
+    properties:
+      created_at:
+        type: string
+      display_name:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      timezone:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.BankAccount:
+    properties:
+      account_id:
+        description: ссылка на главный аккаунт
+        type: integer
+      account_type:
+        description: '"cash", "debit", "credit", "savings"'
+        type: string
+      bank_name:
+        description: '"Kaspi", "Halyk", "Cash"'
+        type: string
+      created_at:
+        type: string
+      currency:
+        description: '"KZT", "USD", "EUR"'
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        description: '"Каспи рубли", "Халык доллары", "Наличные USD"'
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Category:
+    properties:
+      account_id:
+        description: привязаны к аккаунту
+        type: integer
+      color:
+        description: для UI
+        type: string
+      created_at:
+        type: string
+      icon:
+        description: для UI
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        description: '"Продукты", "Транспорт", "Зарплата"'
+        type: string
+      type:
+        description: '"income", "expense"'
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.CreateAccountRequest:
+    properties:
+      display_name:
+        maxLength: 40
+        minLength: 2
+        type: string
+    required:
+    - display_name
+    type: object
+  models.CreateBankAccountRequest:
+    properties:
+      account_type:
+        enum:
+        - cash
+        - debit
+        - credit
+        - savings
+        type: string
+      bank_name:
+        maxLength: 40
+        minLength: 2
+        type: string
+      currency:
+        enum:
+        - KZT
+        - USD
+        - EUR
+        - RUB
+        type: string
+      name:
+        maxLength: 40
+        minLength: 2
+        type: string
+    required:
+    - account_type
+    - bank_name
+    - currency
+    - name
+    type: object
+  models.CreateCategoryRequest:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      type:
+        enum:
+        - income
+        - expense
+        type: string
+    required:
+    - color
+    - icon
+    - name
+    - type
+    type: object
+  models.CreateTransactionRequest:
+    properties:
+      amount:
+        description: Сумма транзакции
+        type: number
+      bank_account_id:
+        description: ID банковского счета
+        type: integer
+      category_id:
+        description: ID категории (может быть null)
+        type: integer
+      description:
+        description: Описание транзакции
+        maxLength: 255
+        minLength: 1
+        type: string
+      transaction_type:
+        description: 'Тип: доход или расход'
+        enum:
+        - income
+        - expense
+        type: string
+    required:
+    - amount
+    - bank_account_id
+    - description
+    - transaction_type
+    type: object
+  models.TransactionResponse:
+    properties:
+      amount:
+        type: number
+      bank_account_id:
+        type: integer
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      transaction_type:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.TransferRequest:
+    properties:
+      amount:
+        description: Сумма перевода
+        type: number
+      description:
+        description: Описание перевода
+        maxLength: 255
+        minLength: 1
+        type: string
+      from_account_id:
+        description: Откуда переводим
+        type: integer
+      to_account_id:
+        description: Куда переводим
+        type: integer
+    required:
+    - amount
+    - description
+    - from_account_id
+    - to_account_id
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Personal Finance Management API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Fin-Core API
+  version: "1.0"
+paths:
+  /account:
+    get:
+      description: Get the authenticated user's account information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AccountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Account not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user account
+      tags:
+      - accounts
+    post:
+      consumes:
+      - application/json
+      description: Create a new financial account for the authenticated user
+      parameters:
+      - description: Account creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.AccountResponse'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new account
+      tags:
+      - accounts
+  /account/{account_id}/transactions:
+    get:
+      description: Get all transactions for a specific bank account
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TransactionResponse'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get transaction history by bank account
+      tags:
+      - transactions
+  /bank_accounts/{account_id}/balance:
+    get:
+      description: Get the current balance of a specific bank account
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Balance information
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get bank account balance
+      tags:
+      - transactions
+  /bankAccounts:
+    get:
+      description: Get all bank accounts for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.BankAccount'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all bank accounts
+      tags:
+      - bank-accounts
+    post:
+      consumes:
+      - application/json
+      description: Create a new bank account for the authenticated user
+      parameters:
+      - description: Bank account creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateBankAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.BankAccount'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new bank account
+      tags:
+      - bank-accounts
+  /bankAccounts/{bank_account_id}:
+    delete:
+      description: Delete a bank account by ID (will also delete all related transactions)
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: bank_account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Access denied
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a bank account
+      tags:
+      - bank-accounts
+    get:
+      description: Get a specific bank account by ID for the authenticated user
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: bank_account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BankAccount'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Bank account not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a specific bank account
+      tags:
+      - bank-accounts
+  /bankAccounts/{bank_account_id}/activate:
+    put:
+      description: Activate a previously deactivated bank account by ID
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: bank_account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Access denied
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Activate a bank account
+      tags:
+      - bank-accounts
+  /bankAccounts/{bank_account_id}/deactivate:
+    put:
+      description: Deactivate a bank account by ID (keeps transactions but hides account)
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: bank_account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Access denied
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Deactivate a bank account
+      tags:
+      - bank-accounts
+  /categories:
+    get:
+      description: Get all categories for the authenticated user's account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense or income category for the authenticated user
+      parameters:
+      - description: Category creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new category
+      tags:
+      - categories
+  /categories/{category_id}:
+    delete:
+      description: Delete a category by ID for the authenticated user
+      parameters:
+      - description: Category ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Category not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a category
+      tags:
+      - categories
+    get:
+      description: Get a specific category by ID for the authenticated user
+      parameters:
+      - description: Category ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Category not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a specific category
+      tags:
+      - categories
+  /transactions:
+    get:
+      description: Get all transactions for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TransactionResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all transactions
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Create a new income, expense, or transfer transaction
+      parameters:
+      - description: Transaction creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.TransactionResponse'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new transaction
+      tags:
+      - transactions
+  /transactions/{id}:
+    get:
+      description: Get a specific transaction by ID for the authenticated user
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TransactionResponse'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Transaction not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a specific transaction
+      tags:
+      - transactions
+  /transfer:
+    post:
+      consumes:
+      - application/json
+      description: Create a transfer transaction between two bank accounts
+      parameters:
+      - description: Transfer request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.TransferRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success message
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Transfer money between bank accounts
+      tags:
+      - transactions
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

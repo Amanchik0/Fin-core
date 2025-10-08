@@ -13,7 +13,7 @@ func AuthMiddleware(authClient *auth.AuthClient) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"ereor":   "Authorization header is required",
+				"error":   "Authorization header is required",
 			})
 			c.Abort()
 			return
@@ -23,7 +23,7 @@ func AuthMiddleware(authClient *auth.AuthClient) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "incalid to expired token",
+				"error":   "Invalid or expired token",
 				"details": err.Error(),
 			})
 			c.Abort()
@@ -39,9 +39,27 @@ func AuthMiddleware(authClient *auth.AuthClient) gin.HandlerFunc {
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+
+		// Список разрешенных origins
+		allowedOrigins := []string{
+			"http://localhost:3000",
+			"http://localhost:8081",  // Expo web dev server
+			"http://localhost:8082",  // Альтернативный порт Expo
+			"http://localhost:19006", // Expo web альтернативный порт
+			"http://localhost:19000", // Metro bundler
+		}
+
+		// Проверяем, разрешен ли origin
+		for _, allowedOrigin := range allowedOrigins {
+			if origin == allowedOrigin {
+				c.Header("Access-Control-Allow-Origin", origin)
+				break
+			}
+		}
+
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Cookie")
 		c.Header("Access-Control-Allow-Credentials", "true")
 
 		if c.Request.Method == "OPTIONS" {

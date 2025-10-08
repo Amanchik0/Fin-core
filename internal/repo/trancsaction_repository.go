@@ -40,12 +40,14 @@ insert into transactions ( bank_account_id, category_id, amount, description, tr
 	}
 	return transaction, nil
 }
-func (r *TransactionRepository) GetByBankAccountID(BankAccountID int64) ([]*models.Transaction, error) {
+
+func (r *TransactionRepository) GetByBankAccountID(BankAccountID int64, limit, offset int) ([]*models.Transaction, error) {
 	query := ` 
 	select id, bank_account_id, category_id, amount, description, transaction_type, 
                date, created_at, updated_at, to_account_id, transfer_rate from transactions where bank_account_id = $1
+	order by created_at desc limit $2 offset $3
 `
-	rows, err := r.db.Query(query, BankAccountID)
+	rows, err := r.db.Query(query, BankAccountID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +141,7 @@ func (r *TransactionRepository) GetByTransactionID(TransactionID int64) (*models
 
 }
 
-func (r *TransactionRepository) GetByAccountID(AccountID int64) ([]*models.Transaction, error) {
+func (r *TransactionRepository) GetByAccountID(AccountID int64, limit, offset int) ([]*models.Transaction, error) {
 	query := ` 
 	select t.id , t.bank_account_id, t.category_id, t.amount, t.description, t.transaction_type,
 	t.date, t.created_at, t.updated_at, to_account_id, t.transfer_rate 
@@ -147,8 +149,10 @@ from transactions t
 	join bank_accounts ba on t.bank_account_id = ba.id
 	where ba.account_id = $1
 	order by t.date desc
+	limit $2 offset $3
+	
 `
-	rows, err := r.db.Query(query, AccountID)
+	rows, err := r.db.Query(query, AccountID, limit, offset)
 	if err != nil {
 		return nil, err
 

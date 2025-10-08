@@ -18,6 +18,19 @@ func NewAccountHandler(accountService *services.AccountService) *AccountHandler 
 }
 
 // CreateAccount POST /api/v1/accounts
+// CreateAccount godoc
+// @Summary Create a new account
+// @Description Create a new financial account for the authenticated user
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param request body models.CreateAccountRequest true "Account creation request"
+// @Success 201 {object} models.AccountResponse
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /account [post]
 func (h *AccountHandler) CreateAccount(c *gin.Context) {
 
 	userID, ok := utils.GetUserID(c)
@@ -59,6 +72,17 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 	})
 }
 
+// GetAccount godoc
+// @Summary Get user account
+// @Description Get the authenticated user's account information
+// @Tags accounts
+// @Produce json
+// @Success 200 {object} models.AccountResponse
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Account not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /account [get]
 func (h *AccountHandler) GetAccount(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {

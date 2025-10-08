@@ -22,6 +22,19 @@ func NewBankAccountHandler(bankAccService *services.BankAccService) *BankAccount
 
 // create bank account  api/v1/bankaccount
 
+// CreateBankAccount godoc
+// @Summary Create a new bank account
+// @Description Create a new bank account for the authenticated user
+// @Tags bank-accounts
+// @Accept json
+// @Produce json
+// @Param request body models.CreateBankAccountRequest true "Bank account creation request"
+// @Success 201 {object} models.BankAccount
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bankAccounts [post]
 func (h *BankAccountHandler) CreateBankAccount(c *gin.Context) {
 
 	userID, ok := utils.GetUserID(c)
@@ -70,6 +83,16 @@ func (h *BankAccountHandler) CreateBankAccount(c *gin.Context) {
 
 // get bank account
 
+// GetBankAccounts godoc
+// @Summary Get all bank accounts
+// @Description Get all bank accounts for the authenticated user
+// @Tags bank-accounts
+// @Produce json
+// @Success 200 {array} models.BankAccount
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bankAccounts [get]
 func (h *BankAccountHandler) GetBankAccounts(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -91,6 +114,19 @@ func (h *BankAccountHandler) GetBankAccounts(c *gin.Context) {
 	})
 }
 
+// GetBankAccount godoc
+// @Summary Get a specific bank account
+// @Description Get a specific bank account by ID for the authenticated user
+// @Tags bank-accounts
+// @Produce json
+// @Param bank_account_id path int true "Bank Account ID"
+// @Success 200 {object} models.BankAccount
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Bank account not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bankAccounts/{bank_account_id} [get]
 func (h *BankAccountHandler) GetBankAccount(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -128,6 +164,20 @@ func (h *BankAccountHandler) GetBankAccount(c *gin.Context) {
 	})
 
 }
+
+// ActivateBankAccount godoc
+// @Summary Activate a bank account
+// @Description Activate a previously deactivated bank account by ID
+// @Tags bank-accounts
+// @Produce json
+// @Param bank_account_id path int true "Bank Account ID"
+// @Success 200 {object} map[string]interface{} "Success message"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 403 {object} map[string]interface{} "Access denied"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bankAccounts/{bank_account_id}/activate [put]
 func (h *BankAccountHandler) ActivateBankAccount(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -164,6 +214,19 @@ func (h *BankAccountHandler) ActivateBankAccount(c *gin.Context) {
 	})
 }
 
+// DeactivateBankAccount godoc
+// @Summary Deactivate a bank account
+// @Description Deactivate a bank account by ID (keeps transactions but hides account)
+// @Tags bank-accounts
+// @Produce json
+// @Param bank_account_id path int true "Bank Account ID"
+// @Success 200 {object} map[string]interface{} "Success message"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 403 {object} map[string]interface{} "Access denied"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bankAccounts/{bank_account_id}/deactivate [put]
 func (h *BankAccountHandler) DeactivateBankAccount(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -200,6 +263,19 @@ func (h *BankAccountHandler) DeactivateBankAccount(c *gin.Context) {
 	})
 }
 
+// DeleteBankAccount godoc
+// @Summary Delete a bank account
+// @Description Delete a bank account by ID (will also delete all related transactions)
+// @Tags bank-accounts
+// @Produce json
+// @Param bank_account_id path int true "Bank Account ID"
+// @Success 200 {object} map[string]interface{} "Success message"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 403 {object} map[string]interface{} "Access denied"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bankAccounts/{bank_account_id} [delete]
 func (h *BankAccountHandler) DeleteBankAccount(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {

@@ -1,13 +1,38 @@
+// @title Fin-Core API
+// @version 1.0
+// @description Personal Finance Management API
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 package main
 
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq" // ← добавить этот импорт!
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "justTest/docs" // ← импорт для swagger
 	"justTest/internal/handlers"
 	"justTest/internal/infrastructure/auth"
 	"justTest/internal/repo"
@@ -52,6 +77,9 @@ func main() {
 		categoryHandler,
 	)
 
+	// Swagger документация
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -94,6 +122,11 @@ func initDB() (*sql.DB, error) {
 		dbHost, dbPort, dbUser, dbName, sslMode)
 
 	db, err := sql.Open("postgres", connStr)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(1 * time.Minute)
+
 	if err != nil {
 		log.Printf("Failed to open database connection: %v", err)
 		return nil, fmt.Errorf("failed to open database: %v", err)

@@ -2,20 +2,20 @@ package services
 
 import (
 	"fmt"
+	"justTest/internal/interfaces"
 	"justTest/internal/models"
-	"justTest/internal/repo"
 	"time"
 )
 
 type CategoryService struct {
-	accountRepo  *repo.AccountRepository
-	categoryRepo *repo.CategoryRepository
+	accountRepo  interfaces.AccountRepository
+	categoryRepo interfaces.CategoryRepository
 	authService  models.AuthService
 }
 
 func NewCategoryService(
-	accountRepo *repo.AccountRepository,
-	categoryRepo *repo.CategoryRepository,
+	accountRepo interfaces.AccountRepository,
+	categoryRepo interfaces.CategoryRepository,
 	authService models.AuthService,
 ) *CategoryService {
 	return &CategoryService{

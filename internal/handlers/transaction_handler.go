@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"justTest/internal/models"
 	"justTest/internal/services"
 	"justTest/internal/utils"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 // ================================
@@ -37,6 +38,19 @@ func (h *TransactionHandler) transactionToResponse(transaction *models.Transacti
 	}
 }
 
+// CreateTransaction godoc
+// @Summary Create a new transaction
+// @Description Create a new income, expense, or transfer transaction
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param request body models.CreateTransactionRequest true "Transaction creation request"
+// @Success 201 {object} models.TransactionResponse
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /transactions [post]
 func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -70,6 +84,19 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	})
 }
 
+// TransferBetweenAccounts godoc
+// @Summary Transfer money between bank accounts
+// @Description Create a transfer transaction between two bank accounts
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param request body models.TransferRequest true "Transfer request"
+// @Success 201 {object} map[string]interface{} "Success message"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /transfer [post]
 func (h *TransactionHandler) TransferBetweenAccounts(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -100,6 +127,18 @@ func (h *TransactionHandler) TransferBetweenAccounts(c *gin.Context) {
 	})
 }
 
+// GetTransactionHistory godoc
+// @Summary Get transaction history by bank account
+// @Description Get all transactions for a specific bank account
+// @Tags transactions
+// @Produce json
+// @Param account_id path int true "Bank Account ID"
+// @Success 200 {array} models.TransactionResponse
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /account/{account_id}/transactions [get]
 func (h *TransactionHandler) GetTransactionHistory(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -130,6 +169,16 @@ func (h *TransactionHandler) GetTransactionHistory(c *gin.Context) {
 	})
 }
 
+// GetAllTransactions godoc
+// @Summary Get all transactions
+// @Description Get all transactions for the authenticated user
+// @Tags transactions
+// @Produce json
+// @Success 200 {array} models.TransactionResponse
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /transactions [get]
 func (h *TransactionHandler) GetAllTransactions(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -153,6 +202,18 @@ func (h *TransactionHandler) GetAllTransactions(c *gin.Context) {
 	})
 }
 
+// GetBankAccountBalance godoc
+// @Summary Get bank account balance
+// @Description Get the current balance of a specific bank account
+// @Tags transactions
+// @Produce json
+// @Param account_id path int true "Bank Account ID"
+// @Success 200 {object} map[string]interface{} "Balance information"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /bank_accounts/{account_id}/balance [get]
 func (h *TransactionHandler) GetBankAccountBalance(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
@@ -181,6 +242,19 @@ func (h *TransactionHandler) GetBankAccountBalance(c *gin.Context) {
 	})
 }
 
+// GetTransaction godoc
+// @Summary Get a specific transaction
+// @Description Get a specific transaction by ID for the authenticated user
+// @Tags transactions
+// @Produce json
+// @Param id path int true "Transaction ID"
+// @Success 200 {object} models.TransactionResponse
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Transaction not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Security BearerAuth
+// @Router /transactions/{id} [get]
 func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {

@@ -6,16 +6,16 @@ import (
 )
 
 type BudgetService struct {
-	budgetRepo  repo.BudgetRepository
+	// budgetRepo  repo.BudgetRepository
 	accountRepo repo.AccountRepository
 }
 
-func NewBudgetService(budgetRepo repo.BudgetRepository, accountRepo repo.AccountRepository) *BudgetService {
-	return &BudgetService{
-		budgetRepo:  budgetRepo,
-		accountRepo: accountRepo,
-	}
-}
+// func NewBudgetService(budgetRepo repo.BudgetRepository, accountRepo repo.AccountRepository) *BudgetService {
+// 	return &BudgetService{
+// 		budgetRepo:  budgetRepo,
+// 		accountRepo: accountRepo,
+// 	}
+// }
 
 // CreateBudget - создать бюджет
 func (s *BudgetService) CreateBudget(userID string, budget *models.Budget) (*models.Budget, error) {

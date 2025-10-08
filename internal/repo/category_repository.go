@@ -53,7 +53,7 @@ returning id;`
 		category.ID)
 	var updatedAt *models.Category
 	if err := row.Scan(&updatedAt); err != nil {
-		return updatedAt, fmt.Errorf("update category: %w", err)
+		return nil, fmt.Errorf("update category: %w", err)
 	}
 	return updatedAt, nil
 }
@@ -91,12 +91,12 @@ where account_id = $1`
 	}
 	return categories, nil
 }
-func (r *CategoryRepository) GetByID(catrgotyID int64) (*models.Category, error) {
+func (r *CategoryRepository) GetByID(categoryID int64) (*models.Category, error) {
 	query := `
 	select id, account_id, name, type, color, icon, is_active, created_at, updated_at 
  from categories where id = $1`
 	category := &models.Category{}
-	err := r.db.QueryRow(query, catrgotyID).Scan(
+	err := r.db.QueryRow(query, categoryID).Scan(
 		&category.ID,
 		&category.AccountID,
 		&category.Name,
@@ -108,7 +108,7 @@ func (r *CategoryRepository) GetByID(catrgotyID int64) (*models.Category, error)
 		&category.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf(`no category with id %d `, catrgotyID)
+			return nil, fmt.Errorf(`no category with id %d `, categoryID)
 		}
 		return nil, fmt.Errorf(`smg get wrong  %d`, err)
 

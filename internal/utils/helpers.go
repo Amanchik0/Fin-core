@@ -6,6 +6,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Config struct {
+	Limit  int
+	Offset int
+}
+
+var PaginationConfig = Config{
+	Limit:  20,
+	Offset: 0,
+}
+
+func GetPaginationParams(page, limit int) (int, int) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+	return limit, offset
+}
+
 func GetUserID(c *gin.Context) (string, bool) {
 	userID, exists := c.Get("user_id")
 	if !exists {
