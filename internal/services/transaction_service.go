@@ -218,3 +218,20 @@ func (s *TransactionService) GetTransactionByID(userID string, transactionID int
 	}
 	return transaction, nil
 }
+
+func (s *TransactionService) GetAllTransactionsByCategoryID(userID string, categoryID int64) ([]*models.Transaction, error) {
+	if categoryID <= 0 {
+		return nil, fmt.Errorf("invalid category id")
+	}
+	if userID == "" {
+		return nil, fmt.Errorf("invalid user id")
+
+	}
+	limit, offset := utils.GetPaginationParams(1, 20)
+	transactions, err := s.transactionRepo.GetByCategoryID(categoryID, limit, offset)
+	if err != nil {
+		return nil, err
+
+	}
+	return transactions, nil
+}

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS budgets (
     id BIGSERIAL PRIMARY KEY,
     account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    budget_limit_name VARCHAR(255) NOT NULL,
     category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     amount DECIMAL(15,2) NOT NULL,
     period VARCHAR(20) NOT NULL CHECK (period IN ('monthly', 'weekly', 'yearly')),
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS budgets (
     end_date DATE NOT NULL,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
     CONSTRAINT unique_budget_per_category_period UNIQUE (category_id, period, start_date)
 );

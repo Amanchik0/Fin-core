@@ -79,7 +79,7 @@ where account_id = $1`
 		return nil, fmt.Errorf("get categories by id: %w", err)
 	}
 	defer rows.Close()
-	var categories []*models.Category = make([]*models.Category, 0)
+	var categories []*models.Category = make([]*models.Category, 0) // можно и без make
 	for rows.Next() {
 		category := &models.Category{}
 		err := rows.Scan(&category.ID, &category.Name, &category.Type, &category.Color, &category.Icon, &category.IsActive, &category.CreatedAt, &category.UpdatedAt)

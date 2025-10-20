@@ -45,6 +45,77 @@ definitions:
       updated_at:
         type: string
     type: object
+  models.Budget:
+    properties:
+      account_id:
+        type: integer
+      amount:
+        description: лимит на период в базовой валюте аккаунта
+        type: number
+      budget_limit_name:
+        type: string
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      period:
+        description: '"monthly", "weekly", "yearly"'
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.BudgetStatus:
+    properties:
+      budget:
+        $ref: '#/definitions/models.Budget'
+      is_exceeded:
+        description: превышен ли бюджет
+        type: boolean
+      progress:
+        description: процент использования (0-100)
+        type: number
+      remaining:
+        description: осталось
+        type: number
+      spent:
+        description: потрачено в текущем периоде в валюте бюджета
+        type: number
+    type: object
+  models.BudgetSummary:
+    properties:
+      budgets:
+        description: Детали по каждому бюджету
+        items:
+          $ref: '#/definitions/models.BudgetWithStatus'
+        type: array
+      is_over_budget:
+        description: Превышен ли общий бюджет
+        type: boolean
+      total_planned:
+        description: Общая планируемая сумма
+        type: number
+      total_remaining:
+        description: Общая оставшаяся сумма
+        type: number
+      total_spent:
+        description: Общая потраченная сумма
+        type: number
+    type: object
+  models.BudgetWithStatus:
+    properties:
+      budget:
+        $ref: '#/definitions/models.Budget'
+      status:
+        $ref: '#/definitions/models.BudgetStatus'
+    type: object
   models.Category:
     properties:
       account_id:
@@ -109,6 +180,35 @@ definitions:
     - bank_name
     - currency
     - name
+    type: object
+  models.CreateBudgetRequest:
+    properties:
+      amount:
+        description: Планируемая сумма
+        type: number
+      budget_name:
+        description: '"Продукты на октябрь"'
+        maxLength: 100
+        minLength: 2
+        type: string
+      category_id:
+        description: ID категории
+        type: integer
+      month:
+        description: Месяц (1-12)
+        maximum: 12
+        minimum: 1
+        type: integer
+      year:
+        description: Год
+        minimum: 2020
+        type: integer
+    required:
+    - amount
+    - budget_name
+    - category_id
+    - month
+    - year
     type: object
   models.CreateCategoryRequest:
     properties:
@@ -590,6 +690,186 @@ paths:
       summary: Deactivate a bank account
       tags:
       - bank-accounts
+  /budgets:
+    get:
+      description: Get all budgets with status for a specific month
+      parameters:
+      - default: 2024
+        description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      - default: 10
+        description: Month (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.BudgetWithStatus'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all budgets for a month
+      tags:
+      - budgets
+    post:
+      consumes:
+      - application/json
+      description: Create a new monthly budget for a category
+      parameters:
+      - description: Budget creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateBudgetRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Budget'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new budget
+      tags:
+      - budgets
+  /budgets/{category_id}/status:
+    get:
+      description: Get budget status (spent/remaining) for a specific category and
+        month
+      parameters:
+      - description: Category ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      - default: 2024
+        description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      - default: 10
+        description: Month (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BudgetStatus'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Budget not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get budget status for a category
+      tags:
+      - budgets
+  /budgets/summary:
+    get:
+      description: Get overall budget summary (total planned vs spent) for a month
+      parameters:
+      - default: 2024
+        description: Year
+        in: query
+        name: year
+        required: true
+        type: integer
+      - default: 10
+        description: Month (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BudgetSummary'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get budget summary for a month
+      tags:
+      - budgets
   /categories:
     get:
       description: Get all categories for the authenticated user's account

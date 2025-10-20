@@ -1,26 +1,26 @@
 package handlers
 
 import (
+	"justTest/internal/events"
 	"justTest/internal/models"
 	"justTest/internal/services"
 	"justTest/internal/utils"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// ================================
-// TRANSACTION HANDLER
-// ================================
-
 type TransactionHandler struct {
 	transactionService *services.TransactionService
+	publisher          *events.Publisher
 }
 
-func NewTransactionHandler(transactionService *services.TransactionService) *TransactionHandler {
+func NewTransactionHandler(transactionService *services.TransactionService, publisher *events.Publisher) *TransactionHandler {
 	return &TransactionHandler{
 		transactionService: transactionService,
+		publisher:          publisher,
 	}
 }
 
@@ -71,11 +71,19 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		req.CategoryID,
 		req.TransactionType,
 	)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	h.publisher.PublishTransactionCreated(events.TransactionCreatedEvent{
+		TransactionID: transaction.ID,
+		UserID:        userID,
+		CategoryID:    *transaction.CategoryID,
+		Amount:        transaction.Amount,
+		Description:   transaction.Description,
+		Timestamp:     time.Now(),
+	})
 	response := h.transactionToResponse(transaction)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -275,6 +283,31 @@ func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 	}
 
 	response := h.transactionToResponse(transaction)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    response,
+	})
+}
+
+func (h *TransactionHandler) GetAllTransactionsByCategoryID(c *gin.Context) {
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		return
+	}
+	categoryIDStr := c.Param("category_id")
+	categoryID, err := strconv.ParseInt(categoryIDStr, 10, 64)
+
+	transactions, err := h.transactionService.GetAllTransactionsByCategoryID(userID, categoryID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var response []models.TransactionResponse
+	for _, transaction := range transactions {
+		response = append(response, h.transactionToResponse(transaction))
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    response,

@@ -1,11 +1,18 @@
 package services
 
 import (
+	"justTest/internal/events"
+	"justTest/internal/interfaces"
 	"justTest/internal/models"
 )
 
 type NotificationService struct {
-	// TODO: Добавить зависимости для отправки уведомлений
+	notificationRepo interfaces.NotificationRepository
+	settingsRepo     UserNotificationSettingsRepository
+
+	budgetService  *BudgetService
+	bankAccService *BankAccountService
+	publisher      *events.Publisher
 }
 
 func NewNotificationService() *NotificationService {

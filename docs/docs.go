@@ -591,6 +591,273 @@ const docTemplate = `{
                 }
             }
         },
+        "/budgets": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all budgets with status for a specific month",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "budgets"
+                ],
+                "summary": "Get all budgets for a month",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 2024,
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Month (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.BudgetWithStatus"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new monthly budget for a category",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "budgets"
+                ],
+                "summary": "Create a new budget",
+                "parameters": [
+                    {
+                        "description": "Budget creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateBudgetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Budget"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/budgets/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get overall budget summary (total planned vs spent) for a month",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "budgets"
+                ],
+                "summary": "Get budget summary for a month",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 2024,
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Month (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/budgets/{category_id}/status": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get budget status (spent/remaining) for a specific category and month",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "budgets"
+                ],
+                "summary": "Get budget status for a category",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 2024,
+                        "description": "Year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Month (1-12)",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Budget not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/categories": {
             "get": {
                 "security": [
@@ -1105,6 +1372,109 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Budget": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "amount": {
+                    "description": "лимит на период в базовой валюте аккаунта",
+                    "type": "number"
+                },
+                "budget_limit_name": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "period": {
+                    "description": "\"monthly\", \"weekly\", \"yearly\"",
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BudgetStatus": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "$ref": "#/definitions/models.Budget"
+                },
+                "is_exceeded": {
+                    "description": "превышен ли бюджет",
+                    "type": "boolean"
+                },
+                "progress": {
+                    "description": "процент использования (0-100)",
+                    "type": "number"
+                },
+                "remaining": {
+                    "description": "осталось",
+                    "type": "number"
+                },
+                "spent": {
+                    "description": "потрачено в текущем периоде в валюте бюджета",
+                    "type": "number"
+                }
+            }
+        },
+        "models.BudgetSummary": {
+            "type": "object",
+            "properties": {
+                "budgets": {
+                    "description": "Детали по каждому бюджету",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BudgetWithStatus"
+                    }
+                },
+                "is_over_budget": {
+                    "description": "Превышен ли общий бюджет",
+                    "type": "boolean"
+                },
+                "total_planned": {
+                    "description": "Общая планируемая сумма",
+                    "type": "number"
+                },
+                "total_remaining": {
+                    "description": "Общая оставшаяся сумма",
+                    "type": "number"
+                },
+                "total_spent": {
+                    "description": "Общая потраченная сумма",
+                    "type": "number"
+                }
+            }
+        },
+        "models.BudgetWithStatus": {
+            "type": "object",
+            "properties": {
+                "budget": {
+                    "$ref": "#/definitions/models.Budget"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.BudgetStatus"
+                }
+            }
+        },
         "models.Category": {
             "type": "object",
             "properties": {
@@ -1191,6 +1561,43 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 40,
                     "minLength": 2
+                }
+            }
+        },
+        "models.CreateBudgetRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "budget_name",
+                "category_id",
+                "month",
+                "year"
+            ],
+            "properties": {
+                "amount": {
+                    "description": "Планируемая сумма",
+                    "type": "number"
+                },
+                "budget_name": {
+                    "description": "\"Продукты на октябрь\"",
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "category_id": {
+                    "description": "ID категории",
+                    "type": "integer"
+                },
+                "month": {
+                    "description": "Месяц (1-12)",
+                    "type": "integer",
+                    "maximum": 12,
+                    "minimum": 1
+                },
+                "year": {
+                    "description": "Год",
+                    "type": "integer",
+                    "minimum": 2020
                 }
             }
         },

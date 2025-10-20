@@ -14,6 +14,7 @@ func RegisterRoutes(
 	accountHandler *AccountHandler,
 	bankAccountHandler *BankAccountHandler,
 	categoryHandler *CategoryHandler,
+	budgetHandler *BudgetHandler,
 ) {
 	router.Use(middleware.CORSMiddleware())
 	v1 := router.Group("/api/v1")
@@ -46,6 +47,8 @@ func RegisterRoutes(
 			transactions.POST("", transactionHandler.CreateTransaction)
 			transactions.GET("", transactionHandler.GetAllTransactions)
 			transactions.GET("/:id", transactionHandler.GetTransaction)
+			transactions.GET("/by-category/:category_id", transactionHandler.GetAllTransactionsByCategoryID)
+
 		}
 		protected.POST("/transfer", transactionHandler.TransferBetweenAccounts)
 
@@ -58,6 +61,14 @@ func RegisterRoutes(
 			categories.GET("", categoryHandler.GetByAccountID)
 			categories.GET("/:category_id", categoryHandler.GetCategoryByID)
 			categories.DELETE("/:category_id", categoryHandler.DeleteCategoryByID)
+		}
+		budgets := protected.Group("/budgets")
+		{
+			budgets.POST("", budgetHandler.CreateBudget)
+			budgets.GET("", budgetHandler.GetBudgets)
+			budgets.GET("/:category_id/status", budgetHandler.GetBudgetStatus)
+			budgets.GET("/summary", budgetHandler.GetBudgetSummary)
+
 		}
 	}
 	optional := v1.Group("/public")

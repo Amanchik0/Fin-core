@@ -24,15 +24,16 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"justTest/internal/events"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq" // ← добавить этот импорт!
+	_ "github.com/lib/pq"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "justTest/docs" // ← импорт для swagger
+	_ "justTest/docs"
 	"justTest/internal/handlers"
 	"justTest/internal/infrastructure/auth"
 	"justTest/internal/repo"
@@ -55,16 +56,27 @@ func main() {
 	bankAccountRepo := repo.NewBankAccountRepository(db)
 	transactionRepo := repo.NewTransactionRepository(db)
 	categoryRepo := repo.NewCategoryRepository(db)
+	budgetRepo := repo.NewBudgetRepository(db)
 
 	accountService := services.NewAccountService(accountRepo, bankAccountRepo, transactionRepo, authClient)
 	bankAccService := services.NewBankAccService(bankAccountRepo, accountRepo)
 	transactionService := services.NewTransactionService(transactionRepo, bankAccountRepo, categoryRepo, accountRepo)
 	categoryService := services.NewCategoryService(accountRepo, categoryRepo, authClient)
+	budgetService := services.NewBudgetService(budgetRepo, transactionRepo, accountRepo, categoryRepo)
 
+	publisher, err := events.NewPublisher("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	consumer, err := events.NewConsumer("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		log.Fatal("Failed to create consumer:", err)
+	}
 	accountHandler := handlers.NewAccountHandler(accountService)
 	bankAccountHandler := handlers.NewBankAccountHandler(bankAccService)
-	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	transactionHandler := handlers.NewTransactionHandler(transactionService, publisher)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
+	budgetHandler := handlers.NewBudgetHandler(budgetService)
 
 	router := gin.Default()
 
@@ -75,11 +87,17 @@ func main() {
 		accountHandler,
 		bankAccountHandler,
 		categoryHandler,
+		budgetHandler,
 	)
 
-	// Swagger документация
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	go func() {
+		log.Println("Starting consumer")
+		if err := consumer.ConsumeTransactionCreated(); err != nil {
+			log.Fatal(err)
 
+		}
+	}()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

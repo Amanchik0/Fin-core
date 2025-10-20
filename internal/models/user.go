@@ -61,15 +61,17 @@ type Category struct {
 
 // Budget - бюджеты на категории
 type Budget struct {
-	ID         int64     `json:"id" db:"id"`
-	AccountID  int64     `json:"account_id" db:"account_id"`
-	CategoryID int64     `json:"category_id" db:"category_id"`
-	Amount     float64   `json:"amount" db:"amount"` // лимит на период в базовой валюте аккаунта
-	Period     string    `json:"period" db:"period"` // "monthly", "weekly", "yearly"
-	StartDate  time.Time `json:"start_date" db:"start_date"`
-	EndDate    time.Time `json:"end_date" db:"end_date"`
-	IsActive   bool      `json:"is_active" db:"is_active"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	ID              int64     `json:"id" db:"id"`
+	AccountID       int64     `json:"account_id" db:"account_id"`
+	BudgetLimitName string    `json:"budget_limit_name" db:"budget_limit_name"`
+	CategoryID      int64     `json:"category_id" db:"category_id"`
+	Amount          float64   `json:"amount" db:"amount"` // лимит на период в базовой валюте аккаунта
+	Period          string    `json:"period" db:"period"` // "monthly", "weekly", "yearly"
+	StartDate       time.Time `json:"start_date" db:"start_date"`
+	EndDate         time.Time `json:"end_date" db:"end_date"`
+	IsActive        bool      `json:"is_active" db:"is_active"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // BankAccountBalance - кэшированные балансы банковских счетов
@@ -142,6 +144,32 @@ type AccountResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type Notification struct {
+	ID        int64                  `json:"id" db:"id"`
+	UserID    string                 `json:"user_id" db:"user_id"`
+	Type      string                 `json:"type" db:"type"`
+	Title     string                 `json:"title" db:"title"`
+	Message   string                 `json:"message" db:"message"`
+	Data      map[string]interface{} `json:"data" db:"data"`
+	IsRead    bool                   `json:"is_read" db:"is_read"`
+	Priority  string                 `json:"priority" db:"priority"`
+	CreatedAt time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time              `json:"updated_at" db:"updated_at"`
+}
+type UserNotificationSettings struct {
+	ID                   int64     `json:"id" db:"id"`
+	UserID               string    `json:"user_id" db:"user_id"`
+	BudgetAlertsEnabled  bool      `json:"budget_alerts_enabled" db:"budget_alerts_enabled"`
+	BalanceAlertsEnabled bool      `json:"balance_alerts_enabled" db:"balance_alerts_enabled"`
+	BudgetWarningPercent int       `json:"budget_warning_percent" db:"budget_warning_percent"`
+	LowBalanceThreshold  float64   `json:"low_balance_threshold" db:"low_balance_threshold"`
+	PreferredChannel     string    `json:"preferred_channel" db:"preferred_channel"`
+	CreatedAt            time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// ниже по аналитике
+
 // MonthlyReport - месячный отчет
 type MonthlyReport struct {
 	Month        int                 `json:"month"`
@@ -186,6 +214,8 @@ type BalanceAlert struct {
 	AlertThreshold float64 `json:"alert_threshold"`
 }
 
+// Requests
+
 type CreateBankAccountRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=40"`
 	Currency    string `json:"currency" binding:"required,oneof=KZT USD EUR RUB"`
@@ -204,6 +234,30 @@ type CreateTransactionRequest struct {
 	Description     string  `json:"description" binding:"required,min=1,max=255"`             // Описание транзакции
 	CategoryID      *int64  `json:"category_id"`                                              // ID категории (может быть null)
 	TransactionType string  `json:"transaction_type" binding:"required,oneof=income expense"` // Тип: доход или расход
+}
+
+// CreateBudgetRequest - запрос на создание бюджета
+type CreateBudgetRequest struct {
+	BudgetName string  `json:"budget_name" binding:"required,min=2,max=100"` // "Продукты на октябрь"
+	CategoryID int64   `json:"category_id" binding:"required"`               // ID категории
+	Amount     float64 `json:"amount" binding:"required,gt=0"`               // Планируемая сумма
+	Month      int     `json:"month" binding:"required,min=1,max=12"`        // Месяц (1-12)
+	Year       int     `json:"year" binding:"required,min=2020"`             // Год
+}
+
+// BudgetWithStatus - бюджет со статусом
+type BudgetWithStatus struct {
+	Budget *Budget       `json:"budget"`
+	Status *BudgetStatus `json:"status"`
+}
+
+// BudgetSummary - общая сводка по всем бюджетам
+type BudgetSummary struct {
+	TotalPlanned   float64             `json:"total_planned"`   // Общая планируемая сумма
+	TotalSpent     float64             `json:"total_spent"`     // Общая потраченная сумма
+	TotalRemaining float64             `json:"total_remaining"` // Общая оставшаяся сумма
+	IsOverBudget   bool                `json:"is_over_budget"`  // Превышен ли общий бюджет
+	Budgets        []*BudgetWithStatus `json:"budgets"`         // Детали по каждому бюджету
 }
 
 type TransferRequest struct {

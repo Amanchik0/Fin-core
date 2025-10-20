@@ -68,21 +68,26 @@ func (r *TransactionRepository) GetByBankAccountID(BankAccountID int64, limit, o
 			&transaction.ToAccountID,
 			&transaction.TransferRate,
 		)
-		transactions = append(transactions, transaction)
 		if err != nil {
 			return transactions, fmt.Errorf("error getting transaction: %v", err)
 		}
+		transactions = append(transactions, transaction)
+
 	}
 	return transactions, nil
 
 }
 
-func (r *TransactionRepository) GetByCategoryID(CategoryID int64) ([]*models.Transaction, error) {
+// TODO надо везде дату добавить а то есть лимиты но нет даты я хз на каком уровне его добавить но надо
+func (r *TransactionRepository) GetByCategoryID(CategoryID int64, limit, offset int) ([]*models.Transaction, error) {
 	query := ` 
 	select id, bank_account_id, category_id, amount, description, transaction_type, 
-               date, created_at, updated_at, to_account_id, transfer_rate from transactions where category_id = $1
+               date, created_at, updated_at, to_account_id, transfer_rate 
+	from transactions where category_id = $1
+		order by created_at desc limit $2 offset $3
+
 `
-	rows, err := r.db.Query(query, CategoryID)
+	rows, err := r.db.Query(query, CategoryID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -294,4 +299,144 @@ func (r *TransactionRepository) GetTotalAmountByBankAccountID(BankAccountID int6
 	}
 	return amount, nil
 
+}
+
+func (r *TransactionRepository) GetSpentAmountByCategoryAndMonth(categoryID int64, year, month int) (float64, error) {
+	query := ` 
+	select COALESCE(SUM(ABS(amount)), 0) 
+-- 	    as total // можно тотал убрать и после amount умножить все в тг 
+from transactions where category_id =$1 
+	and transaction_type ='expense' 
+	and extract(year from date) =$2 
+	and extract(month from date) =$3
+-- 	group by currency; // хз вот убрать или нет 
+`
+	row := r.db.QueryRow(query, categoryID, year, month)
+	var amount float64
+	err := row.Scan(&amount)
+	if err != nil {
+		return amount, fmt.Errorf("error getting total amount by bank account id: %v", err)
+	}
+	return amount, nil
+}
+
+func (r *TransactionRepository) GetTransactionsByCategoryAndMonth(categoryID int64, year, month int, limit, offset int) ([]*models.Transaction, error) {
+	query := `
+        SELECT id, bank_account_id, category_id, amount, description, transaction_type, 
+               date, created_at, updated_at, to_account_id, transfer_rate 
+        FROM transactions 
+        WHERE category_id = $1 
+        AND EXTRACT(YEAR FROM date) = $2 
+        AND EXTRACT(MONTH FROM date) = $3
+        ORDER BY date DESC 
+        LIMIT $4 OFFSET $5
+    `
+	rows, err := r.db.Query(query, categoryID, year, month, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	transactions := make([]*models.Transaction, 0)
+	for rows.Next() {
+		transaction := &models.Transaction{}
+		err := rows.Scan(
+			&transaction.ID,
+			&transaction.BankAccountID,
+			&transaction.CategoryID,
+			&transaction.Amount,
+			&transaction.Description,
+			&transaction.TransactionType,
+			&transaction.Date,
+			&transaction.CreatedAt,
+			&transaction.UpdatedAt,
+			&transaction.ToAccountID,
+			&transaction.TransferRate,
+		)
+		if err != nil {
+			return transactions, fmt.Errorf("error getting transaction: %v", err)
+
+		}
+		transactions = append(transactions, transaction)
+
+	}
+	return transactions, nil
+}
+
+func (r *TransactionRepository) GetTransactionsByDateRangeWithCategory(categoryID int64, startDate, endDate time.Time, limit, offset int) ([]*models.Transaction, error) {
+	query := `
+     SELECT id, bank_account_id, category_id, amount, description, transaction_type, 
+               date, created_at, updated_at, to_account_id, transfer_rate 
+        FROM transactions
+        where category_id = $1
+    AND date >= $2 
+        AND date <= $3
+        ORDER BY date DESC 
+        LIMIT $4 OFFSET $5        `
+	rows, err := r.db.Query(query, categoryID, startDate, endDate, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("error getting transactions by date range: %v", err)
+	}
+	defer rows.Close()
+
+	var transactions []*models.Transaction
+	for rows.Next() {
+		transaction := &models.Transaction{}
+		err := rows.Scan(
+			&transaction.ID,
+			&transaction.BankAccountID,
+			&transaction.CategoryID,
+			&transaction.Amount,
+			&transaction.Description,
+			&transaction.TransactionType,
+			&transaction.Date,
+			&transaction.CreatedAt,
+			&transaction.UpdatedAt,
+			&transaction.ToAccountID,
+			&transaction.TransferRate,
+		)
+		if err != nil {
+			return transactions, fmt.Errorf("error scanning transaction: %v", err)
+		}
+		transactions = append(transactions, transaction)
+	}
+	return transactions, nil
+}
+
+func (r *TransactionRepository) GetTransactionsByDateRange(startDate, endDate time.Time, limit, offset int) ([]*models.Transaction, error) {
+	query := `
+     SELECT id, bank_account_id, category_id, amount, description, transaction_type, 
+               date, created_at, updated_at, to_account_id, transfer_rate 
+        FROM transactions
+        where date >= $1
+        AND date <= $2
+        ORDER BY date DESC 
+        LIMIT $3 OFFSET $4        `
+	rows, err := r.db.Query(query, startDate, endDate, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("error getting transactions by date range: %v", err)
+	}
+	defer rows.Close()
+
+	var transactions []*models.Transaction
+	for rows.Next() {
+		transaction := &models.Transaction{}
+		err := rows.Scan(
+			&transaction.ID,
+			&transaction.BankAccountID,
+			&transaction.CategoryID,
+			&transaction.Amount,
+			&transaction.Description,
+			&transaction.TransactionType,
+			&transaction.Date,
+			&transaction.CreatedAt,
+			&transaction.UpdatedAt,
+			&transaction.ToAccountID,
+			&transaction.TransferRate,
+		)
+		if err != nil {
+			return transactions, fmt.Errorf("error scanning transaction: %v", err)
+		}
+		transactions = append(transactions, transaction)
+	}
+	return transactions, nil
 }
