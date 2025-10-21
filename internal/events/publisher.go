@@ -24,10 +24,18 @@ func NewPublisher(rabbitmqURl string) (*Publisher, error) {
 
 }
 
+func (p *Publisher) Close() error {
+	if p.ch != nil {
+		p.ch.Close()
+	}
+	if p.conn != nil {
+		p.conn.Close()
+	}
+	return nil
+}
 func (p *Publisher) PublishTransactionCreated(event TransactionCreatedEvent) error {
 	q, err := p.ch.QueueDeclare(
-		"transaction_created",
-		false,
+		"transaction_created", true,
 		false,
 		false,
 		false,

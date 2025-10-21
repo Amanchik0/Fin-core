@@ -5,11 +5,6 @@ import (
 	"justTest/internal/models"
 )
 
-type s interface {
-	GetSettings(userID string) (*models.UserNotificationSettings, error)
-	SaveSettings(settings *models.UserNotificationSettings) error
-	UpdateSettings(settings *models.UserNotificationSettings) error
-}
 type UserNotificationSettingsRepository struct {
 	db *sql.DB
 }

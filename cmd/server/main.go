@@ -57,26 +57,32 @@ func main() {
 	transactionRepo := repo.NewTransactionRepository(db)
 	categoryRepo := repo.NewCategoryRepository(db)
 	budgetRepo := repo.NewBudgetRepository(db)
-
-	accountService := services.NewAccountService(accountRepo, bankAccountRepo, transactionRepo, authClient)
-	bankAccService := services.NewBankAccService(bankAccountRepo, accountRepo)
-	transactionService := services.NewTransactionService(transactionRepo, bankAccountRepo, categoryRepo, accountRepo)
-	categoryService := services.NewCategoryService(accountRepo, categoryRepo, authClient)
-	budgetService := services.NewBudgetService(budgetRepo, transactionRepo, accountRepo, categoryRepo)
+	notificationRepo := repo.NewNotificationRepository(db)
+	settingRepo := repo.NewUserNotificationSettingsRepository(db)
 
 	publisher, err := events.NewPublisher("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		log.Fatal(err)
 	}
-	consumer, err := events.NewConsumer("amqp://guest:guest@localhost:5672/")
+	defer publisher.Close()
+	accountService := services.NewAccountService(accountRepo, bankAccountRepo, transactionRepo, authClient)
+	bankAccService := services.NewBankAccService(bankAccountRepo, accountRepo)
+	transactionService := services.NewTransactionService(transactionRepo, bankAccountRepo, categoryRepo, accountRepo)
+	categoryService := services.NewCategoryService(accountRepo, categoryRepo, authClient)
+	budgetService := services.NewBudgetService(budgetRepo, transactionRepo, accountRepo, categoryRepo, publisher)
+	notificationService := services.NewNotificationService(notificationRepo, settingRepo, publisher)
+
+	consumer, err := events.NewConsumer("amqp://guest:guest@localhost:5672/", notificationService, budgetService)
 	if err != nil {
 		log.Fatal("Failed to create consumer:", err)
 	}
+	defer consumer.Close()
 	accountHandler := handlers.NewAccountHandler(accountService)
 	bankAccountHandler := handlers.NewBankAccountHandler(bankAccService)
 	transactionHandler := handlers.NewTransactionHandler(transactionService, publisher)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	budgetHandler := handlers.NewBudgetHandler(budgetService)
+	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
 	router := gin.Default()
 
@@ -88,15 +94,13 @@ func main() {
 		bankAccountHandler,
 		categoryHandler,
 		budgetHandler,
+		notificationHandler,
 	)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	go func() {
 		log.Println("Starting consumer")
-		if err := consumer.ConsumeTransactionCreated(); err != nil {
-			log.Fatal(err)
-
-		}
+		consumer.ConsumeAll()
 	}()
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -15,6 +15,7 @@ func RegisterRoutes(
 	bankAccountHandler *BankAccountHandler,
 	categoryHandler *CategoryHandler,
 	budgetHandler *BudgetHandler,
+	notificationHandler *NotificationHandler,
 ) {
 	router.Use(middleware.CORSMiddleware())
 	v1 := router.Group("/api/v1")
@@ -68,6 +69,16 @@ func RegisterRoutes(
 			budgets.GET("", budgetHandler.GetBudgets)
 			budgets.GET("/:category_id/status", budgetHandler.GetBudgetStatus)
 			budgets.GET("/summary", budgetHandler.GetBudgetSummary)
+
+		}
+		notification := protected.Group("/notification")
+		{
+
+			notification.GET("", notificationHandler.GetUserNotifications)   // ?limit=20&offset=0
+			notification.PUT("/:id/read", notificationHandler.MarkAsRead)    // PUT /notifications/123/read
+			notification.PUT("/read-all", notificationHandler.MarkAllAsRead) // PUT /notifications/read-all
+			notification.GET("/settings", notificationHandler.GetSettings)   // GET /notifications/settings
+			notification.PUT("/settings", notificationHandler.SaveSettings)  // PUT /notifications/settings
 
 		}
 	}

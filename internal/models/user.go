@@ -167,6 +167,13 @@ type UserNotificationSettings struct {
 	CreatedAt            time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
 }
+type SaveSettingsRequest struct {
+	BudgetAlertsEnabled  bool    `json:"budget_alerts_enabled"`
+	BalanceAlertsEnabled bool    `json:"balance_alerts_enabled"`
+	BudgetWarningPercent int     `json:"budget_warning_percent" binding:"min=0,max=100"`
+	LowBalanceThreshold  float64 `json:"low_balance_threshold" binding:"min=0"`
+	PreferredChannel     string  `json:"preferred_channel" binding:"required,oneof=email push sms"`
+}
 
 // ниже по аналитике
 

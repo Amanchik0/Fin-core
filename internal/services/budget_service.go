@@ -2,8 +2,10 @@ package services
 
 import (
 	"fmt"
+	"justTest/internal/events"
 	"justTest/internal/interfaces"
 	"justTest/internal/models"
+	"log"
 	"time"
 )
 
@@ -12,6 +14,7 @@ type BudgetService struct {
 	transactionRepo interfaces.TransactionRepository
 	accountRepo     interfaces.AccountRepository
 	categoryRepo    interfaces.CategoryRepository
+	publisher       *events.Publisher
 }
 
 func NewBudgetService(
@@ -19,13 +22,100 @@ func NewBudgetService(
 	transactionRepo interfaces.TransactionRepository,
 	accountRepo interfaces.AccountRepository,
 	categoryRepo interfaces.CategoryRepository,
+	publisher *events.Publisher,
 ) *BudgetService {
 	return &BudgetService{
 		budgetRepo:      budgetRepo,
 		transactionRepo: transactionRepo,
 		accountRepo:     accountRepo,
 		categoryRepo:    categoryRepo,
+		publisher:       publisher,
 	}
+}
+func (s *BudgetService) CheckBudgetAfterTransaction(event events.TransactionCreatedEvent) error {
+	log.Printf("[BudgetService] Checking budget for transaction: ID=%d, CategoryID=%d, Amount=%.2f",
+		event.TransactionID, event.CategoryID, event.Amount)
+	if event.Amount >= 0 {
+		log.Printf("[BudgetService] Skipping: not an expense (amount=%.2f)", event.Amount)
+		return nil
+	}
+	//category, err := s.categoryRepo.GetByID(event.CategoryID)
+	//if err != nil {
+	//	return fmt.Errorf("get category: %w", err)
+	//}
+	now := time.Now()
+	year := now.Year()
+	month := int(now.Month())
+	budget, err := s.budgetRepo.GetBudgetByCategoryAndMonth(event.CategoryID, year, month)
+	if err != nil {
+		log.Printf("[BudgetService] No budget found for category %d in %d-%02d", event.CategoryID, year, month)
+		return nil
+	}
+	account, err := s.accountRepo.GetByUserID(event.UserID)
+	if err != nil {
+		return fmt.Errorf("get account: %w", err)
+	}
+	if budget.AccountID != account.ID {
+		log.Printf("[BudgetService] Budget does not belong to user")
+		return nil
+	}
+	spentAmount, err := s.transactionRepo.GetSpentAmountByCategoryAndMonth(event.CategoryID, year, month)
+	if err != nil {
+		return fmt.Errorf("get spent amount: %w", err)
+	}
+	log.Printf("[BudgetService] Budget check: Spent=%.2f / Limit=%.2f (%.0f%%)",
+		spentAmount, budget.Amount, (spentAmount/budget.Amount)*100)
+	if spentAmount > budget.Amount {
+		excessAmount := spentAmount - budget.Amount
+		log.Printf("[BudgetService] ⚠️ Budget EXCEEDED by %.2f", excessAmount)
+
+		// Публикуем событие превышения бюджета
+		if s.publisher != nil {
+			err := s.publisher.PublishBudgetExceeded(events.BudgetExceededEvent{
+				UserID:       event.UserID,
+				BudgetID:     budget.ID,
+				BudgetName:   budget.BudgetLimitName,
+				BudgetAmount: budget.Amount,
+				SpentAmount:  spentAmount,
+				ExcessAmount: excessAmount,
+				CategoryID:   event.CategoryID,
+				Timestamp:    time.Now(),
+			})
+			if err != nil {
+				log.Printf("[BudgetService] Error publishing BudgetExceeded event: %v", err)
+			} else {
+				log.Printf("[BudgetService] ✅ Published BudgetExceeded event")
+			}
+		}
+		return nil
+	}
+	warningThreshold := budget.Amount * 0.80
+	if spentAmount >= warningThreshold {
+		percentUsed := (spentAmount / budget.Amount) * 100
+		log.Printf("[BudgetService] ⚠ Budget WARNING: %.0f%% used", percentUsed)
+
+		// Публикуем предупреждение
+		if s.publisher != nil {
+			err := s.publisher.PublishBudgetWarning(events.BudgetWarningEvent{
+				UserID:         event.UserID,
+				BudgetID:       budget.ID,
+				BudgetName:     budget.BudgetLimitName,
+				BudgetAmount:   budget.Amount,
+				SpentAmount:    spentAmount,
+				WarningPercent: percentUsed,
+				CategoryID:     event.CategoryID,
+				Timestamp:      time.Now(),
+			})
+			if err != nil {
+				log.Printf("[BudgetService] Error publishing BudgetWarning event: %v", err)
+			} else {
+				log.Printf("[BudgetService]  Published BudgetWarning event")
+			}
+		}
+	}
+
+	log.Printf("[BudgetService]  Budget check completed")
+	return nil
 }
 
 func (s *BudgetService) CreateBudget(userID string, req *models.CreateBudgetRequest) (*models.Budget, error) {

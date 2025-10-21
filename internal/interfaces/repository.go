@@ -62,5 +62,10 @@ type NotificationRepository interface {
 	MarkAllAsRead(userID string) error
 
 	DeleteNotification(id int64) error
-	DeleteOldNotifications(days int) error
+	//DeleteOldNotifications(days int) error
+}
+type UserNotificationSettingsRepository interface {
+	GetSettings(userID string) (*models.UserNotificationSettings, error)
+	SaveSettings(settings *models.UserNotificationSettings) error
+	UpdateSettings(settings *models.UserNotificationSettings) (*models.UserNotificationSettings, error)
 }

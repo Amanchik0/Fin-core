@@ -76,14 +76,17 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	h.publisher.PublishTransactionCreated(events.TransactionCreatedEvent{
-		TransactionID: transaction.ID,
-		UserID:        userID,
-		CategoryID:    *transaction.CategoryID,
-		Amount:        transaction.Amount,
-		Description:   transaction.Description,
-		Timestamp:     time.Now(),
-	})
+	if transaction.CategoryID != nil && transaction.TransactionType == "expense" {
+		h.publisher.PublishTransactionCreated(events.TransactionCreatedEvent{
+			TransactionID: transaction.ID,
+			UserID:        userID,
+			CategoryID:    *transaction.CategoryID,
+			Amount:        transaction.Amount,
+			Description:   transaction.Description,
+			Timestamp:     time.Now(),
+		})
+	}
+
 	response := h.transactionToResponse(transaction)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
