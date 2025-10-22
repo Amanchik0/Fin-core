@@ -2,6 +2,7 @@ package repo
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"justTest/internal/models"
 )
@@ -23,12 +24,18 @@ func (r *NotificationRepository) SaveNotification(notification *models.Notificat
 	values ($1,$2,$3,$4,$5,$6,$7)
 	returning id;
 `
-	err := r.db.QueryRow(query,
+	dataJSON, err := json.Marshal(notification.Data)
+	if err != nil {
+
+		return fmt.Errorf("failed to marshal data: %w", err)
+	}
+
+	err = r.db.QueryRow(query,
 		notification.UserID,
 		notification.Type,
 		notification.Title,
 		notification.Message,
-		notification.Data,
+		dataJSON,
 		notification.IsRead,
 		notification.Priority,
 	).Scan(&notification.ID)
@@ -44,13 +51,15 @@ func (r *NotificationRepository) GetNotificationByID(id int64) (*models.Notifica
 
 `
 	notification := &models.Notification{}
+	var dataJSON []byte
+
 	err := r.db.QueryRow(query, id).Scan(
 		&notification.ID,
 		&notification.UserID,
 		&notification.Type,
 		&notification.Title,
 		&notification.Message,
-		&notification.Data,
+		&dataJSON,
 		&notification.IsRead,
 		&notification.Priority,
 
@@ -59,6 +68,12 @@ func (r *NotificationRepository) GetNotificationByID(id int64) (*models.Notifica
 	)
 	if err != nil {
 		return nil, err
+	}
+	if len(dataJSON) > 0 {
+		if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+			return nil, err
+		}
+
 	}
 	return notification, nil
 }
@@ -80,13 +95,14 @@ from notifications where user_id = $1
 
 	for rows.Next() {
 		notification := &models.Notification{}
+		var dataJSON []byte
 		err := rows.Scan(
 			&notification.ID,
 			&notification.UserID,
 			&notification.Type,
 			&notification.Title,
 			&notification.Message,
-			&notification.Data,
+			&dataJSON,
 			&notification.IsRead,
 			&notification.Priority,
 			&notification.CreatedAt,
@@ -94,6 +110,12 @@ from notifications where user_id = $1
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning notification: %v", err)
+		}
+		if len(dataJSON) > 0 {
+			if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+				return nil, err
+			}
+
 		}
 		notifications = append(notifications, notification)
 
@@ -118,13 +140,14 @@ data , is_read , priority, created_at, updated_at from notifications where user_
 	defer rows.Close()
 	for rows.Next() {
 		notification := &models.Notification{}
+		var dataJSON []byte
 		err := rows.Scan(
 			&notification.ID,
 			&notification.UserID,
 			&notification.Type,
 			&notification.Title,
 			&notification.Message,
-			&notification.Data,
+			&dataJSON,
 
 			&notification.IsRead,
 			&notification.Priority,
@@ -133,6 +156,12 @@ data , is_read , priority, created_at, updated_at from notifications where user_
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning notification: %v", err)
+		}
+		if len(dataJSON) > 0 {
+			if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+				return nil, err
+			}
+
 		}
 		notifications = append(notifications, notification)
 	}

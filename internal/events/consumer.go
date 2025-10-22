@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"justTest/internal/models/events"
 	"justTest/internal/services"
 	"log"
 
@@ -63,7 +64,7 @@ func (c *Consumer) ConsumeTransactionCreated() error {
 	log.Println("[Consumer]  Starting to consume transaction_created events...")
 
 	for d := range msgs {
-		var event TransactionCreatedEvent
+		var event events.TransactionCreatedEvent
 		err := json.Unmarshal(d.Body, &event)
 		if err != nil {
 			log.Printf(" [Consumer] Error unmarshaling event: %v", err)
@@ -115,7 +116,7 @@ func (c *Consumer) BalanceAlertConsumer() error {
 	}
 	for d := range msgs {
 		log.Printf("Received a message: %s", d.Body)
-		var event LowBalanceEvent
+		var event events.LowBalanceEvent
 		err := json.Unmarshal(d.Body, &event)
 		if err != nil {
 			log.Printf("Error unmarshaling event: %v", err)
@@ -153,7 +154,7 @@ func (c *Consumer) ConsumeBudgetExceeded() error {
 	log.Println("[Consumer]  Starting to consume budget_exceeded events...")
 
 	for d := range msgs {
-		var event BudgetExceededEvent
+		var event events.BudgetExceededEvent
 		err := json.Unmarshal(d.Body, &event)
 		if err != nil {
 			log.Printf(" [Consumer] Error unmarshaling event: %v", err)
@@ -196,7 +197,7 @@ func (c *Consumer) ConsumeBudgetWarning() error {
 	log.Println("[Consumer]  Starting to consume budget_warning events...")
 
 	for d := range msgs {
-		var event BudgetWarningEvent
+		var event events.BudgetWarningEvent
 		if err := json.Unmarshal(d.Body, &event); err != nil {
 			log.Printf("[Consumer]  Error unmarshaling budget warning event: %v", err)
 			d.Nack(false, false)
@@ -241,7 +242,7 @@ func (c *Consumer) ConsumeLowBalance() error {
 	}
 	log.Println("[Consumer]  Starting to consume low_balance events...")
 	for d := range msgs {
-		var event LowBalanceEvent
+		var event events.LowBalanceEvent
 		err := json.Unmarshal(d.Body, &event)
 		if err != nil {
 			log.Printf("[Consumer] Error unmarshaling event: %v", err)

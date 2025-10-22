@@ -2,9 +2,9 @@ package services
 
 import (
 	"fmt"
-	"justTest/internal/events"
 	"justTest/internal/interfaces"
 	"justTest/internal/models"
+	"justTest/internal/models/events"
 	"log"
 	"time"
 )
@@ -14,7 +14,7 @@ type BudgetService struct {
 	transactionRepo interfaces.TransactionRepository
 	accountRepo     interfaces.AccountRepository
 	categoryRepo    interfaces.CategoryRepository
-	publisher       *events.Publisher
+	publisher       interface{}
 }
 
 func NewBudgetService(
@@ -22,7 +22,7 @@ func NewBudgetService(
 	transactionRepo interfaces.TransactionRepository,
 	accountRepo interfaces.AccountRepository,
 	categoryRepo interfaces.CategoryRepository,
-	publisher *events.Publisher,
+	publisher interface{},
 ) *BudgetService {
 	return &BudgetService{
 		budgetRepo:      budgetRepo,
@@ -67,24 +67,28 @@ func (s *BudgetService) CheckBudgetAfterTransaction(event events.TransactionCrea
 		spentAmount, budget.Amount, (spentAmount/budget.Amount)*100)
 	if spentAmount > budget.Amount {
 		excessAmount := spentAmount - budget.Amount
-		log.Printf("[BudgetService] ⚠️ Budget EXCEEDED by %.2f", excessAmount)
+		log.Printf("[BudgetService] ⚠ Budget EXCEEDED by %.2f", excessAmount)
 
 		// Публикуем событие превышения бюджета
 		if s.publisher != nil {
-			err := s.publisher.PublishBudgetExceeded(events.BudgetExceededEvent{
-				UserID:       event.UserID,
-				BudgetID:     budget.ID,
-				BudgetName:   budget.BudgetLimitName,
-				BudgetAmount: budget.Amount,
-				SpentAmount:  spentAmount,
-				ExcessAmount: excessAmount,
-				CategoryID:   event.CategoryID,
-				Timestamp:    time.Now(),
-			})
-			if err != nil {
-				log.Printf("[BudgetService] Error publishing BudgetExceeded event: %v", err)
-			} else {
-				log.Printf("[BudgetService] ✅ Published BudgetExceeded event")
+			if publisher, ok := s.publisher.(interface {
+				PublishBudgetExceeded(events.BudgetExceededEvent) error
+			}); ok {
+				err := publisher.PublishBudgetExceeded(events.BudgetExceededEvent{
+					UserID:       event.UserID,
+					BudgetID:     budget.ID,
+					BudgetName:   budget.BudgetLimitName,
+					BudgetAmount: budget.Amount,
+					SpentAmount:  spentAmount,
+					ExcessAmount: excessAmount,
+					CategoryID:   event.CategoryID,
+					Timestamp:    time.Now(),
+				})
+				if err != nil {
+					log.Printf("[BudgetService] Error publishing BudgetExceeded event: %v", err)
+				} else {
+					log.Printf("[BudgetService]  Published BudgetExceeded event")
+				}
 			}
 		}
 		return nil
@@ -92,24 +96,28 @@ func (s *BudgetService) CheckBudgetAfterTransaction(event events.TransactionCrea
 	warningThreshold := budget.Amount * 0.80
 	if spentAmount >= warningThreshold {
 		percentUsed := (spentAmount / budget.Amount) * 100
-		log.Printf("[BudgetService] ⚠ Budget WARNING: %.0f%% used", percentUsed)
+		log.Printf("[BudgetService] Budget WARNING: %.0f%% used", percentUsed)
 
 		// Публикуем предупреждение
 		if s.publisher != nil {
-			err := s.publisher.PublishBudgetWarning(events.BudgetWarningEvent{
-				UserID:         event.UserID,
-				BudgetID:       budget.ID,
-				BudgetName:     budget.BudgetLimitName,
-				BudgetAmount:   budget.Amount,
-				SpentAmount:    spentAmount,
-				WarningPercent: percentUsed,
-				CategoryID:     event.CategoryID,
-				Timestamp:      time.Now(),
-			})
-			if err != nil {
-				log.Printf("[BudgetService] Error publishing BudgetWarning event: %v", err)
-			} else {
-				log.Printf("[BudgetService]  Published BudgetWarning event")
+			if publisher, ok := s.publisher.(interface {
+				PublishBudgetWarning(events.BudgetWarningEvent) error
+			}); ok {
+				err := publisher.PublishBudgetWarning(events.BudgetWarningEvent{
+					UserID:         event.UserID,
+					BudgetID:       budget.ID,
+					BudgetName:     budget.BudgetLimitName,
+					BudgetAmount:   budget.Amount,
+					SpentAmount:    spentAmount,
+					WarningPercent: percentUsed,
+					CategoryID:     event.CategoryID,
+					Timestamp:      time.Now(),
+				})
+				if err != nil {
+					log.Printf("[BudgetService] Error publishing BudgetWarning event: %v", err)
+				} else {
+					log.Printf("[BudgetService]  Published BudgetWarning event")
+				}
 			}
 		}
 	}

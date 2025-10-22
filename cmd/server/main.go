@@ -42,6 +42,8 @@ import (
 	"os"
 )
 
+// TODO обновить IDE
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
@@ -60,11 +62,21 @@ func main() {
 	notificationRepo := repo.NewNotificationRepository(db)
 	settingRepo := repo.NewUserNotificationSettingsRepository(db)
 
-	publisher, err := events.NewPublisher("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		log.Fatal(err)
+	// RabbitMQ configuration
+	rabbitmqURL := os.Getenv("RABBITMQ_URL")
+	if rabbitmqURL == "" {
+		rabbitmqURL = "amqp://guest:guest@localhost:5672/"
 	}
-	defer publisher.Close()
+
+	publisher, err := events.NewPublisher(rabbitmqURL)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to RabbitMQ: %v", err)
+		log.Println("Continuing without RabbitMQ...")
+		publisher = nil
+	}
+	if publisher != nil {
+		defer publisher.Close()
+	}
 	accountService := services.NewAccountService(accountRepo, bankAccountRepo, transactionRepo, authClient)
 	bankAccService := services.NewBankAccService(bankAccountRepo, accountRepo)
 	transactionService := services.NewTransactionService(transactionRepo, bankAccountRepo, categoryRepo, accountRepo)
@@ -72,11 +84,18 @@ func main() {
 	budgetService := services.NewBudgetService(budgetRepo, transactionRepo, accountRepo, categoryRepo, publisher)
 	notificationService := services.NewNotificationService(notificationRepo, settingRepo, publisher)
 
-	consumer, err := events.NewConsumer("amqp://guest:guest@localhost:5672/", notificationService, budgetService)
-	if err != nil {
-		log.Fatal("Failed to create consumer:", err)
+	var consumer *events.Consumer
+	if publisher != nil {
+		consumer, err = events.NewConsumer(rabbitmqURL, notificationService, budgetService)
+		if err != nil {
+			log.Printf("Warning: Failed to create RabbitMQ consumer: %v", err)
+			log.Println("Continuing without RabbitMQ consumer...")
+			consumer = nil
+		}
+		if consumer != nil {
+			defer consumer.Close()
+		}
 	}
-	defer consumer.Close()
 	accountHandler := handlers.NewAccountHandler(accountService)
 	bankAccountHandler := handlers.NewBankAccountHandler(bankAccService)
 	transactionHandler := handlers.NewTransactionHandler(transactionService, publisher)
@@ -98,10 +117,14 @@ func main() {
 	)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	go func() {
-		log.Println("Starting consumer")
-		consumer.ConsumeAll()
-	}()
+	if consumer != nil {
+		go func() {
+			log.Println("Starting RabbitMQ consumer")
+			consumer.ConsumeAll()
+		}()
+	} else {
+		log.Println("RabbitMQ consumer disabled - events will not be processed")
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

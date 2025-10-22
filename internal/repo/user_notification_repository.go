@@ -43,7 +43,7 @@ func (r *UserNotificationSettingsRepository) SaveSettings(settings *models.UserN
 	query := ` 
 insert into user_notification_settings (
                                         user_id, budget_alerts_enabled, balance_alerts_enabled,
-                                        budget_warning_percent, preferred_channel, created_at, updated_at
+                                        budget_warning_percent,low_balance_threshold, preferred_channel, created_at, updated_at
                                         
 ) VALUES ($1, $2, $3, $4, $5, $6, $7 , $8) 
 returning id; `

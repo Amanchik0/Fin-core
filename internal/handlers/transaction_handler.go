@@ -3,8 +3,10 @@ package handlers
 import (
 	"justTest/internal/events"
 	"justTest/internal/models"
+	events2 "justTest/internal/models/events"
 	"justTest/internal/services"
 	"justTest/internal/utils"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -38,6 +40,7 @@ func (h *TransactionHandler) transactionToResponse(transaction *models.Transacti
 	}
 }
 
+// TODO Добавить проверку низкого баланса в TransactionService
 // CreateTransaction godoc
 // @Summary Create a new transaction
 // @Description Create a new income, expense, or transfer transaction
@@ -76,8 +79,8 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if transaction.CategoryID != nil && transaction.TransactionType == "expense" {
-		h.publisher.PublishTransactionCreated(events.TransactionCreatedEvent{
+	if transaction.CategoryID != nil && transaction.TransactionType == "expense" && h.publisher != nil {
+		err := h.publisher.PublishTransactionCreated(events2.TransactionCreatedEvent{
 			TransactionID: transaction.ID,
 			UserID:        userID,
 			CategoryID:    *transaction.CategoryID,
@@ -85,6 +88,11 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 			Description:   transaction.Description,
 			Timestamp:     time.Now(),
 		})
+		if err != nil {
+			log.Printf("Error publishing TransactionCreated event: %v", err)
+		} else {
+			log.Printf("Published TransactionCreated event for transaction %d", transaction.ID)
+		}
 	}
 
 	response := h.transactionToResponse(transaction)

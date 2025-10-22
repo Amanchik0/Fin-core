@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"justTest/internal/models/events"
 
 	"github.com/streadway/amqp"
 )
@@ -33,9 +34,9 @@ func (p *Publisher) Close() error {
 	}
 	return nil
 }
-func (p *Publisher) PublishTransactionCreated(event TransactionCreatedEvent) error {
+func (p *Publisher) PublishTransactionCreated(event events.TransactionCreatedEvent) error {
 	q, err := p.ch.QueueDeclare(
-		"transaction_created", true,
+		"transaction_created", false,
 		false,
 		false,
 		false,
@@ -61,10 +62,13 @@ func (p *Publisher) PublishTransactionCreated(event TransactionCreatedEvent) err
 
 	return err
 }
-func (p *Publisher) PublishBudgetExceeded(event BudgetExceededEvent) error {
+
+// TODO почекать вопрос : Сделать все очереди durable и сообщения persistent
+// TODO balance_alert
+func (p *Publisher) PublishBudgetExceeded(event events.BudgetExceededEvent) error {
 	q, err := p.ch.QueueDeclare(
 		"budget_exceeded",
-		false,
+		true,
 		false,
 		false,
 		false,
@@ -90,10 +94,10 @@ func (p *Publisher) PublishBudgetExceeded(event BudgetExceededEvent) error {
 	return err
 }
 
-func (p *Publisher) PublishLowBalance(event LowBalanceEvent) error {
+func (p *Publisher) PublishLowBalance(event events.LowBalanceEvent) error {
 	q, err := p.ch.QueueDeclare(
 		"low_balance",
-		false,
+		true,
 		false,
 		false,
 		false,
@@ -119,10 +123,10 @@ func (p *Publisher) PublishLowBalance(event LowBalanceEvent) error {
 	)
 	return err
 }
-func (p *Publisher) PublishBudgetWarning(event BudgetWarningEvent) error {
+func (p *Publisher) PublishBudgetWarning(event events.BudgetWarningEvent) error {
 	q, err := p.ch.QueueDeclare(
 		"budget_warning",
-		false,
+		true,
 		false,
 		false,
 		false,
@@ -148,7 +152,7 @@ func (p *Publisher) PublishBudgetWarning(event BudgetWarningEvent) error {
 	)
 	return err
 }
-func (p *Publisher) PublishNotification(event NotificationEvent) error {
+func (p *Publisher) PublishNotification(event events.NotificationEvent) error {
 	q, err := p.ch.QueueDeclare(
 		"notification",
 		false,

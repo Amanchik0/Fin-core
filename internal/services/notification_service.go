@@ -1,11 +1,12 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"justTest/internal/events"
 	"justTest/internal/interfaces"
 	"justTest/internal/models"
+	"justTest/internal/models/events"
 	"log"
 	"time"
 )
@@ -14,13 +15,13 @@ type NotificationService struct {
 	notificationRepo interfaces.NotificationRepository
 	settingsRepo     interfaces.UserNotificationSettingsRepository
 
-	publisher *events.Publisher
+	publisher interface{}
 }
 
 func NewNotificationService(
 	notificationRepo interfaces.NotificationRepository,
 	settingsRepo interfaces.UserNotificationSettingsRepository,
-	publisher *events.Publisher,
+	publisher interface{},
 ) *NotificationService {
 	return &NotificationService{
 		notificationRepo: notificationRepo,
@@ -42,20 +43,22 @@ func (s *NotificationService) MarkAllAsRead(userID string) error {
 }
 func (s *NotificationService) GetSettings(userID string) (*models.UserNotificationSettings, error) {
 	settings, err := s.settingsRepo.GetSettings(userID)
-	if err != nil {
-		return nil, err
-	}
-	if settings == nil {
-		settings = &models.UserNotificationSettings{
+	if err == sql.ErrNoRows {
+		defaultSettings := &models.UserNotificationSettings{
 			UserID:               userID,
 			BudgetAlertsEnabled:  true,
 			BalanceAlertsEnabled: true,
 			BudgetWarningPercent: 80,
-			LowBalanceThreshold:  100.0,
+			LowBalanceThreshold:  1000,
 			PreferredChannel:     "email",
-			CreatedAt:            time.Now(),
-			UpdatedAt:            time.Now(),
 		}
+		if err := s.settingsRepo.SaveSettings(defaultSettings); err != nil {
+			return nil, err
+		}
+		return defaultSettings, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 	return settings, nil
 }
@@ -64,15 +67,18 @@ func (s *NotificationService) SaveSettings(settings *models.UserNotificationSett
 		return nil, errors.New("invalid settings")
 	}
 	existing, err := s.settingsRepo.GetSettings(settings.UserID)
-	if err != nil {
-		return nil, err
-	}
-	if existing == nil {
+	if err == sql.ErrNoRows {
+		settings.CreatedAt = time.Now()
+		settings.UpdatedAt = time.Now()
 		if err := s.settingsRepo.SaveSettings(settings); err != nil {
 			return nil, err
 		}
 		return settings, nil
 	}
+	if err != nil {
+		return nil, err
+	}
+
 	existing.BudgetAlertsEnabled = settings.BudgetAlertsEnabled
 	existing.BalanceAlertsEnabled = settings.BalanceAlertsEnabled
 	existing.BudgetWarningPercent = settings.BudgetWarningPercent
@@ -111,15 +117,19 @@ func (s *NotificationService) HandleLowBalance(event events.LowBalanceEvent) err
 
 	// Опционально — отправить в общую очередь "notification"
 	if s.publisher != nil {
-		_ = s.publisher.PublishNotification(events.NotificationEvent{
-			UserID:    n.UserID,
-			Type:      n.Type,
-			Title:     n.Title,
-			Message:   n.Message,
-			Data:      n.Data,
-			Timestamp: time.Now(),
-			Priority:  n.Priority,
-		})
+		if publisher, ok := s.publisher.(interface {
+			PublishNotification(events.NotificationEvent) error
+		}); ok {
+			_ = publisher.PublishNotification(events.NotificationEvent{
+				UserID:    n.UserID,
+				Type:      n.Type,
+				Title:     n.Title,
+				Message:   n.Message,
+				Data:      n.Data,
+				Timestamp: time.Now(),
+				Priority:  n.Priority,
+			})
+		}
 	}
 	return nil
 }
