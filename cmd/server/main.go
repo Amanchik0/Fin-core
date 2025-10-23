@@ -25,6 +25,7 @@ import (
 	"database/sql"
 	"fmt"
 	"justTest/internal/events"
+	"justTest/internal/services"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,6 @@ import (
 	"justTest/internal/handlers"
 	"justTest/internal/infrastructure/auth"
 	"justTest/internal/repo"
-	"justTest/internal/services"
 	"log"
 	"os"
 )

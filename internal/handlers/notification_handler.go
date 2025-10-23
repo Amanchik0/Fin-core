@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
 	"justTest/internal/models"
 	"justTest/internal/services"
 	"justTest/internal/utils"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type NotificationHandler struct {
